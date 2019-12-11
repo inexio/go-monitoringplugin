@@ -1,7 +1,7 @@
 # go-monitoringplugin
 
 ## Description
-Golang package for writing monitoring check plugins for nagios, icinga2, zabix, etc. It provides the check plugin logic specified at https://www.monitoring-plugins.org/doc/guidelines.html
+Golang package for writing monitoring check plugins for nagios, icinga2, zabbix, etc. It provides the check plugin logic specified at https://www.monitoring-plugins.org/doc/guidelines.html
 
 ## Example / Usage
 	package main
