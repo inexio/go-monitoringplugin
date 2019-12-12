@@ -1,4 +1,6 @@
 /* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
+
+//Package monitoringplugin provides for writing monitoring check plugins for nagios, icinga2, zabbix, etc
 package monitoringplugin
 
 import (

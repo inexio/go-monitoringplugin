@@ -1,4 +1,5 @@
 /* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
+
 package monitoringplugin
 
 import (
@@ -88,7 +89,7 @@ func (p *performanceDataPoint) validate() error {
 }
 
 /*
-This function creates a new performanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the performanceData list in the function performanceData.Add(*performanceDataPoint).
+NewPerformanceDataPoint creates a new performanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the performanceData list in the function performanceData.Add(*performanceDataPoint).
 It is possible to directly add warning, critical, min and max values with the functions SetWarn(int), SetCrit(int), SetMin(int) and SetMax(int).
 Usage:
 	performanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)

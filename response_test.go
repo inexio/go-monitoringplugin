@@ -1,4 +1,5 @@
 /* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
+
 package monitoringplugin
 
 import (
@@ -91,7 +92,7 @@ func TestStatusHierarchy(t *testing.T) {
 
 	r.UpdateStatus(UNKNOWN, "")
 	if r.statusCode != CRITICAL {
-		t.Error("status code did change from CRITICAL to " + strconv.Itoa(r.statusCode) + " after UpdateStatus(UNKNOWN) was called! The function should not affect the status code, because CRITICAL is worse than UNKOWN")
+		t.Error("status code did change from CRITICAL to " + strconv.Itoa(r.statusCode) + " after UpdateStatus(UNKNOWN) was called! The function should not affect the status code, because CRITICAL is worse than UNKNOWN")
 	}
 
 	r = NewResponse("")
@@ -102,12 +103,12 @@ func TestStatusHierarchy(t *testing.T) {
 
 	r.UpdateStatus(WARNING, "")
 	if r.statusCode != UNKNOWN {
-		t.Error("status code did change from UNKNOWN to " + strconv.Itoa(r.statusCode) + " after UpdateStatus(WARNING) was called! The function should not affect the status code, because UNKOWN is worse than WARNING")
+		t.Error("status code did change from UNKNOWN to " + strconv.Itoa(r.statusCode) + " after UpdateStatus(WARNING) was called! The function should not affect the status code, because UNKNOWN is worse than WARNING")
 	}
 
 	r.UpdateStatus(CRITICAL, "")
 	if r.statusCode != CRITICAL {
-		t.Error("status code is did not change from UNKNOWN to CRITICAL after UpdateStatus(CRITICAL) was called! The function should affect the status code, because CRITICAL is worse than UNKOWN")
+		t.Error("status code is did not change from UNKNOWN to CRITICAL after UpdateStatus(CRITICAL) was called! The function should affect the status code, because CRITICAL is worse than UNKNOWN")
 	}
 }
 
@@ -148,6 +149,9 @@ func TestOutputMessages(t *testing.T) {
 	match, err := regexp.MatchString("^OK: "+defaultMessage+"\nmessage1\nmessage2\nmessage3\nmessage4\n$", output)
 	if err != nil {
 		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output did not match to the expected regex")
 	}
 
 	cmd = exec.Command(os.Args[0], "-test.run=TestOutputMessages")

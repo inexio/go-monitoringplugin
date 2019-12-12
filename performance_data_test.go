@@ -1,4 +1,5 @@
 /* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
+
 package monitoringplugin
 
 import (
@@ -17,7 +18,7 @@ func TestPerformanceDataPointCreation(t *testing.T) {
 		t.Error("the created PerfomanceDataPoint NewPerformanceDataPoint")
 	}
 
-	var min float64 = 0
+	var min float64
 	p.SetMin(min)
 	if p.min != min || !p.hasMin {
 		t.Error("SetMin failed")
