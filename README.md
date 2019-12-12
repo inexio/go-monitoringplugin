@@ -1,5 +1,5 @@
 # go-monitoringplugin
-[![Go Report Card](https://goreportcard.com/badge/github.com/inexio/go-monitoringplugin)](https://goreportcard.com/report/github.com/inexio/go-monitoringplugin)
+[![Go Report Card](https://goreportcard.com/badge/github.com/inexio/go-monitoringplugin)](https://goreportcard.com/badge/github.com/inexio/go-monitoringplugin)
 [![GitHub license](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/inexio/go-monitoringplugin/blob/master/LICENSE)
 ## Description
 Golang package for writing monitoring check plugins for nagios, icinga2, zabbix, etc. It provides the check plugin logic specified at https://www.monitoring-plugins.org/doc/guidelines.html
