@@ -31,8 +31,8 @@ type PerformanceDataPoint struct {
 	hasMax  bool
 }
 
-/*e PerformanceData Map.
-Adds a PerformanceDataPoint to th
+/*
+Add adds a PerformanceDataPoint to the PerformanceData Map.
 The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same label in the PerformanceData map.
 Usage:
 	err := PerformanceData.Add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
@@ -128,7 +128,7 @@ func (p *PerformanceDataPoint) outputString() string {
 }
 
 /*
-Set Min Value.
+SetMin sets minimum value.
 */
 func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
 	p.hasMin = true
@@ -137,7 +137,7 @@ func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
 }
 
 /*
-Set Max Value.
+SetMax sets maximum value.
 */
 func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
 	p.hasMax = true
@@ -146,7 +146,7 @@ func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
 }
 
 /*
-Set Warn Value.
+SetWarn sets maximum value.
 */
 func (p *PerformanceDataPoint) SetWarn(warn float64) *PerformanceDataPoint {
 	p.hasWarn = true
@@ -155,7 +155,7 @@ func (p *PerformanceDataPoint) SetWarn(warn float64) *PerformanceDataPoint {
 }
 
 /*
-Set Crit Value.
+SetCrit sets critical value.
 */
 func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
 	p.hasCrit = true
