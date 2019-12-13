@@ -9,14 +9,14 @@ import (
 )
 
 /*
-performanceData is a map where all performanceDataPoints are stored. It assigns labels (string) to performanceDataPoints.
+PerformanceData is a map where all performanceDataPoints are stored. It assigns labels (string) to performanceDataPoints.
 */
-type performanceData map[string]performanceDataPoint
+type PerformanceData map[string]PerformanceDataPoint
 
 /*
-performanceDataPoint contains all information of one performanceDataPoint.
+PerformanceDataPoint contains all information of one PerformanceDataPoint.
 */
-type performanceDataPoint struct {
+type PerformanceDataPoint struct {
 	label string
 	value float64
 	unit  string
@@ -31,16 +31,16 @@ type performanceDataPoint struct {
 	hasMax  bool
 }
 
-/*
-Adds a performanceDataPoint to the performanceData Map.
-The function checks if a performanceDataPoint is valid and if there is already another performanceDataPoint with the same label in the performanceData map.
+/*e PerformanceData Map.
+Adds a PerformanceDataPoint to th
+The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same label in the PerformanceData map.
 Usage:
-	err := performanceData.Add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
+	err := PerformanceData.Add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
 	}
 */
-func (p *performanceData) Add(point *performanceDataPoint) error {
+func (p *PerformanceData) Add(point *PerformanceDataPoint) error {
 	if err := point.validate(); err != nil {
 		return errors.Wrap(err, "given performance data point is not valid")
 	}
@@ -52,10 +52,10 @@ func (p *performanceData) Add(point *performanceDataPoint) error {
 }
 
 /*
-Validates a performanceDataPoint.
-This function is used to check if a performanceDataPoint is compatible with the documentation from 'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
+Validates a PerformanceDataPoint.
+This function is used to check if a PerformanceDataPoint is compatible with the documentation from 'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
 */
-func (p *performanceDataPoint) validate() error {
+func (p *PerformanceDataPoint) validate() error {
 	if p.label == "" {
 		return errors.New("data point label cannot be an empty string")
 	}
@@ -89,13 +89,13 @@ func (p *performanceDataPoint) validate() error {
 }
 
 /*
-NewPerformanceDataPoint creates a new performanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the performanceData list in the function performanceData.Add(*performanceDataPoint).
+NewPerformanceDataPoint creates a new PerformanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the PerformanceData list in the function PerformanceData.Add(*PerformanceDataPoint).
 It is possible to directly add warning, critical, min and max values with the functions SetWarn(int), SetCrit(int), SetMin(int) and SetMax(int).
 Usage:
-	performanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)
+	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)
 */
-func NewPerformanceDataPoint(label string, value float64, unit string) *performanceDataPoint {
-	return &performanceDataPoint{
+func NewPerformanceDataPoint(label string, value float64, unit string) *PerformanceDataPoint {
+	return &PerformanceDataPoint{
 		label: label,
 		value: value,
 		unit:  unit,
@@ -103,9 +103,9 @@ func NewPerformanceDataPoint(label string, value float64, unit string) *performa
 }
 
 /*
-This function returns the performanceDataPoint in the specified string format that will be returned by the check plugin.
+This function returns the PerformanceDataPoint in the specified string format that will be returned by the check plugin.
 */
-func (p *performanceDataPoint) outputString() string {
+func (p *PerformanceDataPoint) outputString() string {
 	var outputString string
 	outputString += "'" + p.label + "'=" + fmt.Sprintf("%g", p.value) + p.unit + ";"
 	if p.hasWarn {
@@ -130,7 +130,7 @@ func (p *performanceDataPoint) outputString() string {
 /*
 Set Min Value.
 */
-func (p *performanceDataPoint) SetMin(min float64) *performanceDataPoint {
+func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
 	p.hasMin = true
 	p.min = min
 	return p
@@ -139,7 +139,7 @@ func (p *performanceDataPoint) SetMin(min float64) *performanceDataPoint {
 /*
 Set Max Value.
 */
-func (p *performanceDataPoint) SetMax(max float64) *performanceDataPoint {
+func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
 	p.hasMax = true
 	p.max = max
 	return p
@@ -148,7 +148,7 @@ func (p *performanceDataPoint) SetMax(max float64) *performanceDataPoint {
 /*
 Set Warn Value.
 */
-func (p *performanceDataPoint) SetWarn(warn float64) *performanceDataPoint {
+func (p *PerformanceDataPoint) SetWarn(warn float64) *PerformanceDataPoint {
 	p.hasWarn = true
 	p.warn = warn
 	return p
@@ -157,7 +157,7 @@ func (p *performanceDataPoint) SetWarn(warn float64) *performanceDataPoint {
 /*
 Set Crit Value.
 */
-func (p *performanceDataPoint) SetCrit(crit float64) *performanceDataPoint {
+func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
 	p.hasCrit = true
 	p.crit = crit
 	return p

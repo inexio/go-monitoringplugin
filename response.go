@@ -10,10 +10,14 @@ import (
 )
 
 const (
-	OK       = 0
-	WARNING  = 1
+	// OK check plugin status = OK
+	OK = 0
+	// WARNING check plugin status = WARNING
+	WARNING = 1
+	// CRITICAL check plugin status = CRITICAL
 	CRITICAL = 2
-	UNKNOWN  = 3
+	// UNKNOWN check plugin status = UNKNOWN
+	UNKNOWN = 3
 )
 
 /*
@@ -23,12 +27,12 @@ type response struct {
 	statusCode       int
 	defaultOkMessage string
 	outputMessages   []string
-	performanceData  performanceData
+	performanceData  PerformanceData
 	outputDelimiter  string
 }
 
 /*
-NewResponse(string) creates a new response and sets the default OK message to the given string. The default OK message will be displayed together with the other output messages, but only if the status is still OK when the check exits.
+NewResponse creates a new response and sets the default OK message to the given string. The default OK message will be displayed together with the other output messages, but only if the status is still OK when the check exits.
 */
 func NewResponse(defaultOkMessage string) *response {
 	response := &response{
@@ -36,19 +40,19 @@ func NewResponse(defaultOkMessage string) *response {
 		defaultOkMessage: defaultOkMessage,
 		outputDelimiter:  "\n",
 	}
-	response.performanceData = make(performanceData)
+	response.performanceData = make(PerformanceData)
 	return response
 }
 
 /*
-AddPerformanceDataPoints(*performanceDataPoint) adds a performanceDataPoint to the performanceData map, using performanceData.Add(*performanceDataPoint).
+AddPerformanceDataPoints(*PerformanceDataPoint) adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.Add(*PerformanceDataPoint).
 Usage:
 	err := response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
 	}
 */
-func (r *response) AddPerformanceDataPoint(point *performanceDataPoint) error {
+func (r *response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
 	return r.performanceData.Add(point)
 }
 
@@ -112,7 +116,7 @@ It can be set to any string.
 Example:
 	response.SetOutputDelimiter(" / ")
 	//this results in the output having the following format:
-	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | performanceData
+	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | PerformanceData
 */
 func (r *response) SetOutputDelimiter(delimiter string) {
 	r.outputDelimiter = delimiter

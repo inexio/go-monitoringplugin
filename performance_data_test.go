@@ -164,7 +164,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 }
 
 func TestPerformanceData_Add(t *testing.T) {
-	perfData := make(performanceData)
+	perfData := make(PerformanceData)
 
 	//valid perfdata point
 	err := perfData.Add(NewPerformanceDataPoint("label", 10, ""))
