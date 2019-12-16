@@ -114,7 +114,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p := NewPerformanceDataPoint(label, value, unit)
 	regex := fmt.Sprintf("'%s'=%g%s;;;;", label, value, unit)
-	match, err := regexp.MatchString(regex, p.outputString())
+	match, err := regexp.MatchString(regex, p.outputString(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -124,7 +124,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetMax(max)
 	regex = fmt.Sprintf("'%s'=%g%s;;;;%g", label, value, unit, max)
-	match, err = regexp.MatchString(regex, p.outputString())
+	match, err = regexp.MatchString(regex, p.outputString(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -134,7 +134,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetWarn(warn)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;;;%g", label, value, unit, warn, max)
-	match, err = regexp.MatchString(regex, p.outputString())
+	match, err = regexp.MatchString(regex, p.outputString(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -144,7 +144,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetCrit(crit)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;;%g", label, value, unit, warn, crit, max)
-	match, err = regexp.MatchString(regex, p.outputString())
+	match, err = regexp.MatchString(regex, p.outputString(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -154,20 +154,50 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetMin(min)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;%g;%g", label, value, unit, warn, crit, min, max)
-	match, err = regexp.MatchString(regex, p.outputString())
+	match, err = regexp.MatchString(regex, p.outputString(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
 	if !match {
 		t.Error("output string did not match regex")
 	}
+
+	regex = fmt.Sprintf(`'{"metric":"%s"}'=%g%s;%g;%g;%g;%g`, label, value, unit, warn, crit, min, max)
+	match, err = regexp.MatchString(regex, p.outputString(true))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output string did not match regex")
+	}
+
+	tag := "tag"
+	p.SetLabelTag(tag)
+	regex = fmt.Sprintf(`'{"metric":"%s","label":"%s"}'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
+	match, err = regexp.MatchString(regex, p.outputString(true))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output string did not match regex")
+	}
+
+	regex = fmt.Sprintf(`'%s_%s'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
+	match, err = regexp.MatchString(regex, p.outputString(false))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output string did not match regex")
+	}
+
 }
 
-func TestPerformanceData_Add(t *testing.T) {
+func TestPerformanceData_add(t *testing.T) {
 	perfData := make(PerformanceData)
 
 	//valid perfdata point
-	err := perfData.Add(NewPerformanceDataPoint("label", 10, ""))
+	err := perfData.add(NewPerformanceDataPoint("label", 10, ""))
 	if err != nil {
 		t.Error("adding a valid performance data point resulted in an error")
 		return
@@ -177,7 +207,27 @@ func TestPerformanceData_Add(t *testing.T) {
 		t.Error("performance data point was not added to the map of performance data points")
 	}
 
-	err = perfData.Add(NewPerformanceDataPoint("label", 10, ""))
+	err = perfData.add(NewPerformanceDataPoint("label", 10, ""))
+	if err == nil {
+		t.Error("there was no error when adding a performance data point with a label, that already exists in performance data")
+	}
+}
+
+func TestResponse_SetPerformanceDataJsonLabel(t *testing.T) {
+	perfData := make(PerformanceData)
+
+	//valid perfdata point
+	err := perfData.add(NewPerformanceDataPoint("label", 10, ""))
+	if err != nil {
+		t.Error("adding a valid performance data point resulted in an error")
+		return
+	}
+
+	if _, ok := perfData["label"]; !ok {
+		t.Error("performance data point was not added to the map of performance data points")
+	}
+
+	err = perfData.add(NewPerformanceDataPoint("label", 10, ""))
 	if err == nil {
 		t.Error("there was no error when adding a performance data point with a label, that already exists in performance data")
 	}

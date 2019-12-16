@@ -215,7 +215,7 @@ func TestOutputPerformanceData(t *testing.T) {
 	}
 
 	output := outputB.String()
-	match, err := regexp.MatchString("^OK: "+defaultMessage+" | "+p1.outputString()+" "+p2.outputString()+" "+p3.outputString()+"\n", output)
+	match, err := regexp.MatchString("^OK: "+defaultMessage+" | "+p1.outputString(false)+" "+p2.outputString(false)+" "+p3.outputString(false)+"\n", output)
 	if err != nil {
 		t.Error(err.Error())
 	}

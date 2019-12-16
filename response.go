@@ -24,11 +24,12 @@ const (
 Response is the main type that is responsible for the check plugin response. It stores the current status code, output messages, performance data and the output message delimiter.
 */
 type response struct {
-	statusCode       int
-	defaultOkMessage string
-	outputMessages   []string
-	performanceData  PerformanceData
-	outputDelimiter  string
+	statusCode               int
+	defaultOkMessage         string
+	outputMessages           []string
+	performanceData          PerformanceData
+	outputDelimiter          string
+	performanceDataJsonLabel bool
 }
 
 /*
@@ -45,7 +46,7 @@ func NewResponse(defaultOkMessage string) *response {
 }
 
 /*
-AddPerformanceDataPoints(*PerformanceDataPoint) adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.Add(*PerformanceDataPoint).
+AddPerformanceDataPoints(*PerformanceDataPoint) adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
 Usage:
 	err := response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
@@ -53,7 +54,7 @@ Usage:
 	}
 */
 func (r *response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
-	return r.performanceData.Add(point)
+	return r.performanceData.add(point)
 }
 
 /*
@@ -72,6 +73,10 @@ Returns the current status code.
 */
 func (r *response) GetStatusCode() int {
 	return r.statusCode
+}
+
+func (r *response) SetPerformanceDataJsonLabel(jsonLabel bool) {
+	r.performanceDataJsonLabel = jsonLabel
 }
 
 /*
@@ -179,7 +184,7 @@ func (r *response) OutputAndExit() {
 		} else {
 			fmt.Print(" ")
 		}
-		fmt.Print(perfDataPoint.outputString())
+		fmt.Print(perfDataPoint.outputString(r.performanceDataJsonLabel))
 	}
 	fmt.Println()
 

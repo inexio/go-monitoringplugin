@@ -25,6 +25,8 @@ type PerformanceDataPoint struct {
 	min   float64
 	max   float64
 
+	labelTag string
+
 	hasWarn bool
 	hasCrit bool
 	hasMin  bool
@@ -32,15 +34,15 @@ type PerformanceDataPoint struct {
 }
 
 /*
-Add adds a PerformanceDataPoint to the PerformanceData Map.
+add adds a PerformanceDataPoint to the PerformanceData Map.
 The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same label in the PerformanceData map.
 Usage:
-	err := PerformanceData.Add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
+	err := PerformanceData.add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
 	}
 */
-func (p *PerformanceData) Add(point *PerformanceDataPoint) error {
+func (p *PerformanceData) add(point *PerformanceDataPoint) error {
 	if err := point.validate(); err != nil {
 		return errors.Wrap(err, "given performance data point is not valid")
 	}
@@ -89,25 +91,39 @@ func (p *PerformanceDataPoint) validate() error {
 }
 
 /*
-NewPerformanceDataPoint creates a new PerformanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the PerformanceData list in the function PerformanceData.Add(*PerformanceDataPoint).
+NewPerformanceDataPoint creates a new PerformanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the PerformanceData list in the function PerformanceData.add(*PerformanceDataPoint).
 It is possible to directly add warning, critical, min and max values with the functions SetWarn(int), SetCrit(int), SetMin(int) and SetMax(int).
 Usage:
 	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)
 */
 func NewPerformanceDataPoint(label string, value float64, unit string) *PerformanceDataPoint {
 	return &PerformanceDataPoint{
-		label: label,
-		value: value,
-		unit:  unit,
+		label:    label,
+		value:    value,
+		unit:     unit,
+		labelTag: "",
 	}
 }
 
 /*
 This function returns the PerformanceDataPoint in the specified string format that will be returned by the check plugin.
 */
-func (p *PerformanceDataPoint) outputString() string {
+func (p *PerformanceDataPoint) outputString(jsonLabel bool) string {
 	var outputString string
-	outputString += "'" + p.label + "'=" + fmt.Sprintf("%g", p.value) + p.unit + ";"
+	if jsonLabel {
+		outputString += `'{"metric":"` + p.label + `"`
+		if p.labelTag != "" {
+			outputString += `,"label":"` + p.labelTag + `"`
+		}
+		outputString += "}'"
+	} else {
+		outputString += "'" + p.label
+		if p.labelTag != "" {
+			outputString += "_" + p.labelTag
+		}
+		outputString += "'"
+	}
+	outputString += "=" + fmt.Sprintf("%g", p.value) + p.unit + ";"
 	if p.hasWarn {
 		outputString += fmt.Sprintf("%g", p.warn)
 	}
@@ -160,5 +176,14 @@ SetCrit sets critical value.
 func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
 	p.hasCrit = true
 	p.crit = crit
+	return p
+}
+
+/*
+AddTag adds a tag to the performance data point
+If one tag is added more than once, the value before will be overwritten
+*/
+func (p *PerformanceDataPoint) SetLabelTag(labelTag string) *PerformanceDataPoint {
+	p.labelTag = labelTag
 	return p
 }
