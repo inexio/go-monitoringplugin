@@ -46,10 +46,10 @@ func (p *PerformanceData) add(point *PerformanceDataPoint) error {
 	if err := point.validate(); err != nil {
 		return errors.Wrap(err, "given performance data point is not valid")
 	}
-	if _, ok := (*p)[point.label]; ok {
+	if _, ok := (*p)[point.label+point.labelTag]; ok {
 		return errors.New("a performance data point with this label does already exist")
 	}
-	(*p)[point.label] = *point
+	(*p)[point.label+point.labelTag] = *point
 	return nil
 }
 
