@@ -2,7 +2,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/inexio/go-monitoringplugin)](https://goreportcard.com/report/github.com/inexio/go-monitoringplugin)
 [![GitHub license](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/inexio/go-monitoringplugin/blob/master/LICENSE)
 ## Description
-Golang package for writing monitoring check plugins for [nagios](https://www.nagios.org/), [icinga2](https://icinga.com/), [zabbix](https://www.zabbix.com/), etc. It provides the check plugin logic specified at https://www.monitoring-plugins.org/doc/guidelines.html
+Golang package for writing monitoring check plugins for [nagios](https://www.nagios.org/), [icinga2](https://icinga.com/), [zabbix](https://www.zabbix.com/), [checkmk](https://checkmk.com/), etc. It provides the check plugin logic specified at https://www.monitoring-plugins.org/doc/guidelines.html
 
 ## Example / Usage
 	package main
