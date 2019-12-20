@@ -211,6 +211,23 @@ func TestPerformanceData_add(t *testing.T) {
 	if err == nil {
 		t.Error("there was no error when adding a performance data point with a label, that already exists in performance data")
 	}
+
+	err = perfData.add(NewPerformanceDataPoint("label", 10, "").SetLabelTag("tag1"))
+	if err != nil {
+		t.Error("adding a valid performance data point resulted in an error")
+		return
+	}
+
+	err = perfData.add(NewPerformanceDataPoint("label", 10, "").SetLabelTag("tag2"))
+	if err != nil {
+		t.Error("adding a valid performance data point resulted in an error")
+		return
+	}
+
+	err = perfData.add(NewPerformanceDataPoint("label", 10, "").SetLabelTag("tag1"))
+	if err == nil {
+		t.Error("there was no error when adding a performance data point with a label and tag, that already exists in performance data")
+	}
 }
 
 func TestResponse_SetPerformanceDataJsonLabel(t *testing.T) {
