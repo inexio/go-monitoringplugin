@@ -46,7 +46,7 @@ func NewResponse(defaultOkMessage string) *Response {
 }
 
 /*
-AddPerformanceDataPoints adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
+AddPerformanceDataPoint adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
 Usage:
 	err := Response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
