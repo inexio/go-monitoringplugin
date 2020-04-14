@@ -46,7 +46,7 @@ func NewResponse(defaultOkMessage string) *Response {
 }
 
 /*
-AddPerformanceDataPoints(*PerformanceDataPoint) adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
+AddPerformanceDataPoints adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
 Usage:
 	err := Response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
@@ -58,7 +58,7 @@ func (r *Response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
 }
 
 /*
-UpdateStatus(int, string) updates the exit status of the Response and adds a statusMessage to the outputMessages that will be displayed when the check exits.
+UpdateStatus updates the exit status of the Response and adds a statusMessage to the outputMessages that will be displayed when the check exits.
 See updateStatusCode(int) for a detailed description of the algorithm that is used to update the status code.
 */
 func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
@@ -69,12 +69,15 @@ func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
 }
 
 /*
-Returns the current status code.
+GetStatusCode returns the current status code.
 */
 func (r *Response) GetStatusCode() int {
 	return r.statusCode
 }
 
+/*
+SetPerformanceDataJSONLabel updates the JSON label.
+*/
 func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 	r.performanceDataJSONLabel = jsonLabel
 }
@@ -116,7 +119,7 @@ func (r *Response) updateStatusCode(statusCode int) {
 }
 
 /*
-This function is used to set the delimiter that is used to separate the outputMessages that will be displayed when the check plugin exits. The default value is a linebreak (\n)
+SetOutputDelimiter is used to set the delimiter that is used to separate the outputMessages that will be displayed when the check plugin exits. The default value is a linebreak (\n)
 It can be set to any string.
 Example:
 	Response.SetOutputDelimiter(" / ")
@@ -128,7 +131,7 @@ func (r *Response) SetOutputDelimiter(delimiter string) {
 }
 
 /*
-Sets the outputDelimiter to "\n". (See Response.SetOutputDelimiter(string))
+OutputDelimiterMultiline sets the outputDelimiter to "\n". (See Response.SetOutputDelimiter(string))
 */
 func (r *Response) OutputDelimiterMultiline() {
 	r.SetOutputDelimiter("\n")
@@ -166,7 +169,7 @@ func (r *Response) outputString() string {
 }
 
 /*
-This function generates the output string and prints it to stdout. After that the check plugin exits with the current exit code.
+OutputAndExit generates the output string and prints it to stdout. After that the check plugin exits with the current exit code.
 Example:
 	Response := NewResponse("everything checked!")
 	defer Response.OutputAndExit()
