@@ -62,7 +62,7 @@ func TestUNKNOWNResponse(t *testing.T) {
 func TestStatusHierarchy(t *testing.T) {
 	r := NewResponse("")
 	if r.statusCode != OK {
-		t.Error("status code is supposed to be OK when a new response is created")
+		t.Error("status code is supposed to be OK when a new Response is created")
 	}
 
 	r.UpdateStatus(WARNING, "")
@@ -140,7 +140,7 @@ func TestOutputMessages(t *testing.T) {
 	err := cmd.Run()
 
 	if err != nil {
-		t.Error("an error occurred during cmd.Run(), but the response was expected to exit with exit code 0")
+		t.Error("an error occurred during cmd.Run(), but the Response was expected to exit with exit code 0")
 		return
 	}
 
@@ -254,7 +254,7 @@ func failureResponse(t *testing.T, exitCode int) {
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() != exitCode {
-				t.Error(status + " response is expected to return exit status " + strconv.Itoa(exitCode) + ", but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
+				t.Error(status + " Response is expected to return exit status " + strconv.Itoa(exitCode) + ", but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
 			}
 		} else {
 			t.Errorf("cmd.Run() Command resulted in an error that can not be converted to exec.ExitEror! error: " + err.Error())

@@ -180,7 +180,7 @@ func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
 }
 
 /*
-AddTag adds a tag to the performance data point
+SetLabelTag adds a tag to the performance data point
 If one tag is added more than once, the value before will be overwritten
 */
 func (p *PerformanceDataPoint) SetLabelTag(labelTag string) *PerformanceDataPoint {

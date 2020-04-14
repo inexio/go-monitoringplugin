@@ -21,22 +21,22 @@ const (
 )
 
 /*
-Response is the main type that is responsible for the check plugin response. It stores the current status code, output messages, performance data and the output message delimiter.
+Response is the main type that is responsible for the check plugin Response. It stores the current status code, output messages, performance data and the output message delimiter.
 */
-type response struct {
+type Response struct {
 	statusCode               int
 	defaultOkMessage         string
 	outputMessages           []string
 	performanceData          PerformanceData
 	outputDelimiter          string
-	performanceDataJsonLabel bool
+	performanceDataJSONLabel bool
 }
 
 /*
-NewResponse creates a new response and sets the default OK message to the given string. The default OK message will be displayed together with the other output messages, but only if the status is still OK when the check exits.
+NewResponse creates a new Response and sets the default OK message to the given string. The default OK message will be displayed together with the other output messages, but only if the status is still OK when the check exits.
 */
-func NewResponse(defaultOkMessage string) *response {
-	response := &response{
+func NewResponse(defaultOkMessage string) *Response {
+	response := &Response{
 		statusCode:       OK,
 		defaultOkMessage: defaultOkMessage,
 		outputDelimiter:  "\n",
@@ -48,20 +48,20 @@ func NewResponse(defaultOkMessage string) *response {
 /*
 AddPerformanceDataPoints(*PerformanceDataPoint) adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
 Usage:
-	err := response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
+	err := Response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
 	}
 */
-func (r *response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
+func (r *Response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
 	return r.performanceData.add(point)
 }
 
 /*
-UpdateStatus(int, string) updates the exit status of the response and adds a statusMessage to the outputMessages that will be displayed when the check exits.
+UpdateStatus(int, string) updates the exit status of the Response and adds a statusMessage to the outputMessages that will be displayed when the check exits.
 See updateStatusCode(int) for a detailed description of the algorithm that is used to update the status code.
 */
-func (r *response) UpdateStatus(statusCode int, statusMessage string) {
+func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
 	r.updateStatusCode(statusCode)
 	if statusMessage != "" {
 		r.outputMessages = append(r.outputMessages, statusMessage)
@@ -71,16 +71,16 @@ func (r *response) UpdateStatus(statusCode int, statusMessage string) {
 /*
 Returns the current status code.
 */
-func (r *response) GetStatusCode() int {
+func (r *Response) GetStatusCode() int {
 	return r.statusCode
 }
 
-func (r *response) SetPerformanceDataJsonLabel(jsonLabel bool) {
-	r.performanceDataJsonLabel = jsonLabel
+func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
+	r.performanceDataJSONLabel = jsonLabel
 }
 
 /*
-This function updates the statusCode of the response. The status code is mapped to a state like this:
+This function updates the statusCode of the Response. The status code is mapped to a state like this:
 0 = OK
 1 = WARNING
 2 = CRITICAL
@@ -92,14 +92,14 @@ CRITICAL > UNKNOWN > WARNING > OK
 Everything "left" from the current status code is seen as worse than the current one. If the function wants to set a status code, it will only update it if the new status code is "left" of the current one.
 Example:
 	//current status code = 1
-	response.updateStatusCode(0) //nothing changes
-	response.updateStatusCode(2) //status code changes to CRITICAL (=2)
+	Response.updateStatusCode(0) //nothing changes
+	Response.updateStatusCode(2) //status code changes to CRITICAL (=2)
 
 	//now current status code = 2
-	response.updateStatusCode(3) //nothing changes, because CRITICAL is worse than UNKNOWN
+	Response.updateStatusCode(3) //nothing changes, because CRITICAL is worse than UNKNOWN
 
 */
-func (r *response) updateStatusCode(statusCode int) {
+func (r *Response) updateStatusCode(statusCode int) {
 	if r.statusCode == CRITICAL { //critical is the worst status code; if its critical, do not change anything
 		return
 	}
@@ -119,18 +119,18 @@ func (r *response) updateStatusCode(statusCode int) {
 This function is used to set the delimiter that is used to separate the outputMessages that will be displayed when the check plugin exits. The default value is a linebreak (\n)
 It can be set to any string.
 Example:
-	response.SetOutputDelimiter(" / ")
+	Response.SetOutputDelimiter(" / ")
 	//this results in the output having the following format:
 	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | PerformanceData
 */
-func (r *response) SetOutputDelimiter(delimiter string) {
+func (r *Response) SetOutputDelimiter(delimiter string) {
 	r.outputDelimiter = delimiter
 }
 
 /*
 Sets the outputDelimiter to "\n". (See Response.SetOutputDelimiter(string))
 */
-func (r *response) OutputDelimiterMultiline() {
+func (r *Response) OutputDelimiterMultiline() {
 	r.SetOutputDelimiter("\n")
 }
 
@@ -153,7 +153,7 @@ func statusCode2Text(statusCode int) string {
 /*
 This function returns the output string that will be returned by the check plugin.
 */
-func (r *response) outputString() string {
+func (r *Response) outputString() string {
 	outputString := statusCode2Text(r.statusCode) + ": "
 	if r.statusCode == OK {
 		outputString += r.defaultOkMessage
@@ -168,12 +168,12 @@ func (r *response) outputString() string {
 /*
 This function generates the output string and prints it to stdout. After that the check plugin exits with the current exit code.
 Example:
-	response := NewResponse("everything checked!")
-	defer response.OutputAndExit()
+	Response := NewResponse("everything checked!")
+	defer Response.OutputAndExit()
 
 	//check plugin logic...
 */
-func (r *response) OutputAndExit() {
+func (r *Response) OutputAndExit() {
 	fmt.Print(r.outputString())
 
 	firstPoint := true
@@ -184,7 +184,7 @@ func (r *response) OutputAndExit() {
 		} else {
 			fmt.Print(" ")
 		}
-		fmt.Print(perfDataPoint.outputString(r.performanceDataJsonLabel))
+		fmt.Print(perfDataPoint.outputString(r.performanceDataJSONLabel))
 	}
 	fmt.Println()
 
