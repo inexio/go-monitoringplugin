@@ -103,7 +103,7 @@ func TestPerformanceDataPoint_validate(t *testing.T) {
 	}
 }
 
-func TestPerformanceDataPoint_outputString(t *testing.T) {
+func TestPerformanceDataPoint_output(t *testing.T) {
 	label := "label"
 	value := 10.0
 	unit := "s"
@@ -114,7 +114,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p := NewPerformanceDataPoint(label, value, unit)
 	regex := fmt.Sprintf("'%s'=%g%s;;;;", label, value, unit)
-	match, err := regexp.MatchString(regex, p.outputString(false))
+	match, err := regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -124,7 +124,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetMax(max)
 	regex = fmt.Sprintf("'%s'=%g%s;;;;%g", label, value, unit, max)
-	match, err = regexp.MatchString(regex, p.outputString(false))
+	match, err = regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -134,7 +134,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetWarn(warn)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;;;%g", label, value, unit, warn, max)
-	match, err = regexp.MatchString(regex, p.outputString(false))
+	match, err = regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -144,7 +144,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetCrit(crit)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;;%g", label, value, unit, warn, crit, max)
-	match, err = regexp.MatchString(regex, p.outputString(false))
+	match, err = regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -154,7 +154,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 
 	p.SetMin(min)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;%g;%g", label, value, unit, warn, crit, min, max)
-	match, err = regexp.MatchString(regex, p.outputString(false))
+	match, err = regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -163,7 +163,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 	}
 
 	regex = fmt.Sprintf(`'{"metric":"%s"}'=%g%s;%g;%g;%g;%g`, label, value, unit, warn, crit, min, max)
-	match, err = regexp.MatchString(regex, p.outputString(true))
+	match, err = regexp.Match(regex, p.output(true))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -174,7 +174,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 	tag := "tag"
 	p.SetLabelTag(tag)
 	regex = fmt.Sprintf(`'{"metric":"%s","label":"%s"}'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
-	match, err = regexp.MatchString(regex, p.outputString(true))
+	match, err = regexp.Match(regex, p.output(true))
 	if err != nil {
 		t.Error(err.Error())
 	}
@@ -183,7 +183,7 @@ func TestPerformanceDataPoint_outputString(t *testing.T) {
 	}
 
 	regex = fmt.Sprintf(`'%s_%s'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
-	match, err = regexp.MatchString(regex, p.outputString(false))
+	match, err = regexp.Match(regex, p.output(false))
 	if err != nil {
 		t.Error(err.Error())
 	}

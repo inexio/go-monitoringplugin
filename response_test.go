@@ -4,6 +4,7 @@ package monitoringplugin
 
 import (
 	"bytes"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"
 	"regexp"
@@ -183,6 +184,37 @@ func TestOutputMessages(t *testing.T) {
 	}
 }
 
+func TestResponse_UpdateStatusIf(t *testing.T) {
+	r := NewResponse("")
+	r.UpdateStatusIf(false, 1, "")
+	assert.True(t, r.statusCode == 0)
+	r.UpdateStatusIf(true, 1, "")
+	assert.True(t, r.statusCode == 1)
+}
+
+func TestResponse_UpdateStatusIfNot(t *testing.T) {
+	r := NewResponse("")
+	r.UpdateStatusIfNot(true, 1, "")
+	assert.True(t, r.statusCode == 0)
+	r.UpdateStatusIfNot(false, 1, "")
+	assert.True(t, r.statusCode == 1)
+}
+
+func TestString2StatusCode(t *testing.T) {
+	assert.True(t, String2StatusCode("ok") == 0)
+	assert.True(t, String2StatusCode("OK") == 0)
+	assert.True(t, String2StatusCode("Ok") == 0)
+	assert.True(t, String2StatusCode("warning") == 1)
+	assert.True(t, String2StatusCode("WARNING") == 1)
+	assert.True(t, String2StatusCode("Warning") == 1)
+	assert.True(t, String2StatusCode("critical") == 2)
+	assert.True(t, String2StatusCode("CRITICAL") == 2)
+	assert.True(t, String2StatusCode("Critical") == 2)
+	assert.True(t, String2StatusCode("unknown") == 3)
+	assert.True(t, String2StatusCode("UNKNOWN") == 3)
+	assert.True(t, String2StatusCode("Unknown") == 3)
+}
+
 func TestOutputPerformanceData(t *testing.T) {
 	p1 := NewPerformanceDataPoint("label1", 10, "%").SetMin(0).SetMax(100).SetWarn(80).SetCrit(90)
 	p2 := NewPerformanceDataPoint("label2", 20, "%").SetMin(0).SetMax(100).SetWarn(80).SetCrit(90)
@@ -214,8 +246,8 @@ func TestOutputPerformanceData(t *testing.T) {
 		t.Error("cmd.Run() returned an exitcode != 0, but exit code 0 was expected")
 	}
 
-	output := outputB.String()
-	match, err := regexp.MatchString("^OK: "+defaultMessage+" | "+p1.outputString(false)+" "+p2.outputString(false)+" "+p3.outputString(false)+"\n", output)
+	output := outputB.Bytes()
+	match, err := regexp.Match("^OK: "+defaultMessage+" | "+p1.outputString(false)+" "+p2.outputString(false)+" "+p3.outputString(false)+"\n", output)
 	if err != nil {
 		t.Error(err.Error())
 	}

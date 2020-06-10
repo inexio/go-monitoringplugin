@@ -4,6 +4,7 @@
 package monitoringplugin
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -30,6 +31,7 @@ type Response struct {
 	performanceData          PerformanceData
 	outputDelimiter          string
 	performanceDataJSONLabel bool
+	printPerformacneData     bool
 }
 
 /*
@@ -37,9 +39,10 @@ NewResponse creates a new Response and sets the default OK message to the given 
 */
 func NewResponse(defaultOkMessage string) *Response {
 	response := &Response{
-		statusCode:       OK,
-		defaultOkMessage: defaultOkMessage,
-		outputDelimiter:  "\n",
+		statusCode:           OK,
+		defaultOkMessage:     defaultOkMessage,
+		outputDelimiter:      "\n",
+		printPerformacneData: true,
 	}
 	response.performanceData = make(PerformanceData)
 	return response
@@ -119,6 +122,41 @@ func (r *Response) updateStatusCode(statusCode int) {
 }
 
 /*
+UpdateStatusIf calls UpdateStatus(statusCode, statusMessage) if the given condition is true.
+*/
+func (r *Response) UpdateStatusIf(condition bool, statusCode int, statusMessage string) bool {
+	if condition {
+		r.UpdateStatus(statusCode, statusMessage)
+	}
+	return condition
+}
+
+/*
+UpdateStatusIfNot calls UpdateStatus(statusCode, statusMessage) if the given condition is false.
+*/
+func (r *Response) UpdateStatusIfNot(condition bool, statusCode int, statusMessage string) bool {
+	if !condition {
+		r.UpdateStatus(statusCode, statusMessage)
+	}
+	return !condition
+}
+
+/*
+UpdateStatusOnError calls UpdateStatus(statusCode, statusMessage) if the given error is not nil.
+*/
+func (r *Response) UpdateStatusOnError(err error, statusCode int, statusMessage string, includeErrorMessage bool) bool {
+	x := err != nil
+	if x {
+		msg := statusMessage
+		if includeErrorMessage {
+			msg = fmt.Sprintf("%s (error: %s)", msg, err)
+		}
+		r.UpdateStatus(statusCode, fmt.Sprintf("%s (error: %s)", statusMessage, err))
+	}
+	return x
+}
+
+/*
 SetOutputDelimiter is used to set the delimiter that is used to separate the outputMessages that will be displayed when the check plugin exits. The default value is a linebreak (\n)
 It can be set to any string.
 Example:
@@ -138,6 +176,13 @@ func (r *Response) OutputDelimiterMultiline() {
 }
 
 /*
+PrintPerformanceData activates or deactivates printing performance data
+*/
+func (r *Response) PrintPerformanceData(b bool) {
+	r.printPerformacneData = b
+}
+
+/*
 This function is used to map the status code to a string.
 */
 func statusCode2Text(statusCode int) string {
@@ -154,18 +199,57 @@ func statusCode2Text(statusCode int) string {
 }
 
 /*
-This function returns the output string that will be returned by the check plugin.
+String2StatusCode returns the status code for a string.
+OK -> 1, WARNING -> 2, CRITICAL -> 3, UNKNOWN and everything else -> 4 (case insensitive)
+*/
+func String2StatusCode(s string) int {
+	switch {
+	case strings.EqualFold("OK", s):
+		return 0
+	case strings.EqualFold("WARNING", s):
+		return 1
+	case strings.EqualFold("CRITICAL", s):
+		return 2
+	default:
+		return 3
+	}
+}
+
+/*
+This function returns the output that will be returned by the check plugin as a string.
 */
 func (r *Response) outputString() string {
-	outputString := statusCode2Text(r.statusCode) + ": "
+	return string(r.output())
+}
+
+/*
+This function returns the output that will be returned by the check plugin.
+*/
+func (r *Response) output() []byte {
+	var buffer bytes.Buffer
+	buffer.WriteString(statusCode2Text(r.statusCode))
+	buffer.WriteString(": ")
 	if r.statusCode == OK {
-		outputString += r.defaultOkMessage
+		buffer.WriteString(r.defaultOkMessage)
 		if len(r.outputMessages) > 0 {
-			outputString += r.outputDelimiter
+			buffer.WriteString(r.outputDelimiter)
 		}
 	}
-	outputString += strings.Join(r.outputMessages, r.outputDelimiter)
-	return outputString
+	buffer.WriteString(strings.Join(r.outputMessages, r.outputDelimiter))
+
+	if r.printPerformacneData {
+		firstPoint := true
+		for _, perfDataPoint := range r.performanceData {
+			if firstPoint {
+				buffer.WriteString(" | ")
+				firstPoint = false
+			} else {
+				buffer.WriteByte(' ')
+			}
+			buffer.Write(perfDataPoint.output(r.performanceDataJSONLabel))
+		}
+	}
+	return buffer.Bytes()
 }
 
 /*
@@ -177,19 +261,16 @@ Example:
 	//check plugin logic...
 */
 func (r *Response) OutputAndExit() {
-	fmt.Print(r.outputString())
-
-	firstPoint := true
-	for _, perfDataPoint := range r.performanceData {
-		if firstPoint {
-			fmt.Print(" | ")
-			firstPoint = false
-		} else {
-			fmt.Print(" ")
-		}
-		fmt.Print(perfDataPoint.outputString(r.performanceDataJSONLabel))
-	}
-	fmt.Println()
-
+	fmt.Printf("%s\n", r.output())
 	os.Exit(r.statusCode)
+}
+
+type ResponseData struct {
+	StatusCode      int
+	PerformanceData []PerformanceDataPointInfo
+	RawOutput       []byte
+}
+
+func (r *Response) GetInfo() ResponseData {
+	return ResponseData{RawOutput: r.output(), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo()}
 }

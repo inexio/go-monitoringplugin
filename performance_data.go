@@ -3,6 +3,7 @@
 package monitoringplugin
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"regexp"
@@ -106,41 +107,57 @@ func NewPerformanceDataPoint(label string, value float64, unit string) *Performa
 }
 
 /*
-This function returns the PerformanceDataPoint in the specified string format that will be returned by the check plugin.
+This function returns the PerformanceDataPoint in the specified format as a string.
 */
 func (p *PerformanceDataPoint) outputString(jsonLabel bool) string {
-	var outputString string
+	return string(p.output(jsonLabel))
+}
+
+/*
+This function returns the PerformanceDataPoint in the specified format that will be returned by the check plugin.
+*/
+func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
+	var buffer bytes.Buffer
 	if jsonLabel {
-		outputString += `'{"metric":"` + p.label + `"`
+		buffer.WriteString(`'{"metric":"`)
+		buffer.WriteString(p.label)
+		buffer.WriteByte('"')
 		if p.labelTag != "" {
-			outputString += `,"label":"` + p.labelTag + `"`
+			buffer.WriteString(`,"label":"`)
+			buffer.WriteString(p.labelTag)
+			buffer.WriteByte('"')
 		}
-		outputString += "}'"
+		buffer.WriteString("}'")
 	} else {
-		outputString += "'" + p.label
+		buffer.WriteByte('\'')
+		buffer.WriteString(p.label)
 		if p.labelTag != "" {
-			outputString += "_" + p.labelTag
+			buffer.WriteByte('_')
+			buffer.WriteString(p.labelTag)
 		}
-		outputString += "'"
+		buffer.WriteByte('\'')
 	}
-	outputString += "=" + fmt.Sprintf("%g", p.value) + p.unit + ";"
+	buffer.WriteByte('=')
+	buffer.WriteString(fmt.Sprintf("%g", p.value))
+	buffer.WriteString(p.unit)
+	buffer.WriteByte(';')
 	if p.hasWarn {
-		outputString += fmt.Sprintf("%g", p.warn)
+		buffer.WriteString(fmt.Sprintf("%g", p.warn))
 	}
-	outputString += ";"
+	buffer.WriteByte(';')
 	if p.hasCrit {
-		outputString += fmt.Sprintf("%g", p.crit)
+		buffer.WriteString(fmt.Sprintf("%g", p.crit))
 	}
-	outputString += ";"
+	buffer.WriteByte(';')
 	if p.hasMin {
-		outputString += fmt.Sprintf("%g", p.min)
+		buffer.WriteString(fmt.Sprintf("%g", p.min))
 	}
-	outputString += ";"
+	buffer.WriteByte(';')
 	if p.hasMax {
-		outputString += fmt.Sprintf("%g", p.max)
+		buffer.WriteString(fmt.Sprintf("%g", p.max))
 	}
 
-	return outputString
+	return buffer.Bytes()
 }
 
 /*
@@ -186,4 +203,37 @@ If one tag is added more than once, the value before will be overwritten
 func (p *PerformanceDataPoint) SetLabelTag(labelTag string) *PerformanceDataPoint {
 	p.labelTag = labelTag
 	return p
+}
+
+type PerformanceDataPointInfo struct {
+	Label    string
+	LabelTag string
+
+	Value float64
+	Unit  string
+	Warn  *float64
+	Crit  *float64
+	Min   *float64
+	Max   *float64
+}
+
+func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
+	return PerformanceDataPointInfo{
+		Label:    p.label,
+		LabelTag: p.labelTag,
+		Value:    p.value,
+		Unit:     p.unit,
+		Warn:     &p.warn,
+		Crit:     &p.crit,
+		Min:      &p.min,
+		Max:      &p.max,
+	}
+}
+
+func (p PerformanceData) GetInfo() []PerformanceDataPointInfo {
+	var info []PerformanceDataPointInfo
+	for _, pd := range p {
+		info = append(info, pd.GetInfo())
+	}
+	return info
 }
