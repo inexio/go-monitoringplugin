@@ -265,12 +265,18 @@ func (r *Response) OutputAndExit() {
 	os.Exit(r.statusCode)
 }
 
-type ResponseData struct {
+/*
+ResponseInfo has all available information for a response.
+*/
+type ResponseInfo struct {
 	StatusCode      int
 	PerformanceData []PerformanceDataPointInfo
 	RawOutput       []byte
 }
 
-func (r *Response) GetInfo() ResponseData {
-	return ResponseData{RawOutput: r.output(), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo()}
+/*
+GetInfo returns all information for a response.
+*/
+func (r *Response) GetInfo() ResponseInfo {
+	return ResponseInfo{RawOutput: r.output(), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo()}
 }

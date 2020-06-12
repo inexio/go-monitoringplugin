@@ -205,6 +205,10 @@ func (p *PerformanceDataPoint) SetLabelTag(labelTag string) *PerformanceDataPoin
 	return p
 }
 
+/*
+PerformanceDataPointInfo has all information to one performance data point as exported variables. It is returned by
+PerformanceDataPoint.GetInfo()
+*/
 type PerformanceDataPointInfo struct {
 	Label    string
 	LabelTag string
@@ -217,6 +221,9 @@ type PerformanceDataPointInfo struct {
 	Max   *float64
 }
 
+/*
+GetInfo returns all information for a performance data point.
+*/
 func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
 	return PerformanceDataPointInfo{
 		Label:    p.label,
@@ -230,6 +237,9 @@ func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
 	}
 }
 
+/*
+GetInfo returns all information for performance data.
+*/
 func (p PerformanceData) GetInfo() []PerformanceDataPointInfo {
 	var info []PerformanceDataPointInfo
 	for _, pd := range p {
