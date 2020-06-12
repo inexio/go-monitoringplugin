@@ -149,9 +149,13 @@ func (r *Response) UpdateStatusOnError(err error, statusCode int, statusMessage 
 	if x {
 		msg := statusMessage
 		if includeErrorMessage {
-			msg = fmt.Sprintf("%s (error: %s)", msg, err)
+			if msg != "" {
+				msg = fmt.Sprintf("%s (error: %s)", msg, err)
+			} else {
+				msg = err.Error()
+			}
 		}
-		r.UpdateStatus(statusCode, fmt.Sprintf("%s (error: %s)", statusMessage, err))
+		r.UpdateStatus(statusCode, msg)
 	}
 	return x
 }
