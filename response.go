@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -25,13 +26,22 @@ const (
 Response is the main type that is responsible for the check plugin Response. It stores the current status code, output messages, performance data and the output message delimiter.
 */
 type Response struct {
-	statusCode               int
-	defaultOkMessage         string
-	outputMessages           []string
-	performanceData          PerformanceData
-	outputDelimiter          string
-	performanceDataJSONLabel bool
-	printPerformacneData     bool
+	statusCode                 int
+	defaultOkMessage           string
+	outputMessages             []OutputMessage
+	performanceData            PerformanceData
+	outputDelimiter            string
+	performanceDataJSONLabel   bool
+	printPerformacneData       bool
+	sortOutputMessagesByStatus bool
+}
+
+/*
+OutputMessage represents a message of the response.
+*/
+type OutputMessage struct {
+	Status  int
+	Message string
 }
 
 /*
@@ -67,7 +77,7 @@ See updateStatusCode(int) for a detailed description of the algorithm that is us
 func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
 	r.updateStatusCode(statusCode)
 	if statusMessage != "" {
-		r.outputMessages = append(r.outputMessages, statusMessage)
+		r.outputMessages = append(r.outputMessages, OutputMessage{statusCode, statusMessage})
 	}
 }
 
@@ -187,6 +197,13 @@ func (r *Response) PrintPerformanceData(b bool) {
 }
 
 /*
+SortOutputMessagesByStatus sorts the output messages according to their status.
+*/
+func (r *Response) SortOutputMessagesByStatus(b bool) {
+	r.sortOutputMessagesByStatus = b
+}
+
+/*
 This function is used to map the status code to a string.
 */
 func statusCode2Text(statusCode int) string {
@@ -239,7 +256,18 @@ func (r *Response) output() []byte {
 			buffer.WriteString(r.outputDelimiter)
 		}
 	}
-	buffer.WriteString(strings.Join(r.outputMessages, r.outputDelimiter))
+	var messages []OutputMessage
+	if r.sortOutputMessagesByStatus {
+		messages = r.getOutputMessagesSortedByStatus()
+	} else {
+		messages = r.outputMessages
+	}
+	for c, x := range messages {
+		if c != 0 {
+			buffer.WriteString(r.outputDelimiter)
+		}
+		buffer.WriteString(x.Message)
+	}
 
 	if r.printPerformacneData {
 		firstPoint := true
@@ -254,6 +282,19 @@ func (r *Response) output() []byte {
 		}
 	}
 	return buffer.Bytes()
+}
+
+func (r *Response) getOutputMessagesSortedByStatus() []OutputMessage {
+	var messages []OutputMessage
+	// generate copy of messages
+	messages = append(messages, r.outputMessages...)
+	sort.Slice(messages, func(i, j int) bool {
+		if messages[i].Status == CRITICAL {
+			return true
+		}
+		return messages[i].Status > messages[j].Status
+	})
+	return messages
 }
 
 /*
@@ -275,12 +316,13 @@ ResponseInfo has all available information for a response.
 type ResponseInfo struct {
 	StatusCode      int
 	PerformanceData []PerformanceDataPointInfo
-	RawOutput       []byte
+	RawOutput       string
+	Messages        []OutputMessage
 }
 
 /*
 GetInfo returns all information for a response.
 */
 func (r *Response) GetInfo() ResponseInfo {
-	return ResponseInfo{RawOutput: r.output(), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo()}
+	return ResponseInfo{RawOutput: string(r.output()), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo(), Messages: r.getOutputMessagesSortedByStatus()}
 }

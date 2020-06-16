@@ -305,3 +305,21 @@ func failureResponse(t *testing.T, exitCode int) {
 	}
 	return
 }
+
+func TestResponse_SortOutputMessagesByStatus(t *testing.T) {
+	r := NewResponse("defaultMessage")
+	r.UpdateStatus(OK, "message1")
+	r.UpdateStatus(WARNING, "message2")
+	r.UpdateStatus(UNKNOWN, "message3")
+	r.UpdateStatus(CRITICAL, "message4")
+	r.UpdateStatus(WARNING, "message5")
+	r.UpdateStatus(CRITICAL, "message6")
+	r.UpdateStatus(UNKNOWN, "message7")
+	r.UpdateStatus(OK, "message8")
+	messages := r.getOutputMessagesSortedByStatus()
+	for x, message := range messages {
+		for _, m := range messages[x:] {
+			assert.True(t, message.Status >= m.Status || message.Status == CRITICAL, "sorting did not work")
+		}
+	}
+}
