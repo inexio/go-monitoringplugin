@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"regexp"
+	"strconv"
 )
 
 /*
@@ -138,7 +139,7 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 		buffer.WriteByte('\'')
 	}
 	buffer.WriteByte('=')
-	buffer.WriteString(fmt.Sprintf("%g", p.value))
+	buffer.WriteString(strconv.FormatFloat(p.value, 'f', -1, 64))
 	buffer.WriteString(p.unit)
 	buffer.WriteByte(';')
 	if p.hasWarn {
