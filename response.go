@@ -40,8 +40,8 @@ type Response struct {
 OutputMessage represents a message of the response.
 */
 type OutputMessage struct {
-	Status  int
-	Message string
+	Status  int    `yaml:"status" json:"status" xml:"status"`
+	Message string `yaml:"message" json:"message" xml:"message"`
 }
 
 /*
@@ -314,10 +314,10 @@ func (r *Response) OutputAndExit() {
 ResponseInfo has all available information for a response.
 */
 type ResponseInfo struct {
-	StatusCode      int
-	PerformanceData []PerformanceDataPointInfo
-	RawOutput       string
-	Messages        []OutputMessage
+	StatusCode      int                        `yaml:"status_code" json:"status_code" xml:"status_code"`
+	PerformanceData []PerformanceDataPointInfo `yaml:"performance_data" json:"performance_data" xml:"performance_data"`
+	RawOutput       string                     `yaml:"raw_output" json:"raw_output" xml:"raw_output"`
+	Messages        []OutputMessage            `yaml:"messages" json:"messages" xml:"messages"`
 }
 
 /*

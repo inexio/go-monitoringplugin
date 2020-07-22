@@ -211,15 +211,15 @@ PerformanceDataPointInfo has all information to one performance data point as ex
 PerformanceDataPoint.GetInfo()
 */
 type PerformanceDataPointInfo struct {
-	Label    string
-	LabelTag string
+	Label    string `yaml:"label" json:"label" xml:"label"`
+	LabelTag string `yaml:"label_tag" json:"label_tag" xml:"label_tag"`
 
-	Value float64
-	Unit  string
-	Warn  *float64
-	Crit  *float64
-	Min   *float64
-	Max   *float64
+	Value float64  `yaml:"value" json:"value" xml:"value"`
+	Unit  string   `yaml:"unit" json:"unit" xml:"unit"`
+	Warn  *float64 `yaml:"warn" json:"warn" xml:"warn"`
+	Crit  *float64 `yaml:"crit" json:"crit" xml:"crit"`
+	Min   *float64 `yaml:"min" json:"min" xml:"min"`
+	Max   *float64 `yaml:"max" json:"max" xml:"max"`
 }
 
 /*
