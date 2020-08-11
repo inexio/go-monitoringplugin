@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
+/* Copyright (c) 2020, inexio GmbH, BSD 2-Clause License */
 
 package monitoringplugin
 
