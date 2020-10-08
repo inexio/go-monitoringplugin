@@ -6,8 +6,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
+	"math/big"
 	"regexp"
-	"strconv"
 )
 
 /*
@@ -20,12 +20,12 @@ PerformanceDataPoint contains all information of one PerformanceDataPoint.
 */
 type PerformanceDataPoint struct {
 	label string
-	value float64
+	value interface{}
 	unit  string
-	warn  float64 //currently we do not support ranges for warning and critical thresholds, because icinga2 does not support it
-	crit  float64
-	min   float64
-	max   float64
+	warn  interface{} //currently we do not support ranges for warning and critical thresholds, because icinga2 does not support it
+	crit  interface{}
+	min   interface{}
+	max   interface{}
 
 	labelTag string
 
@@ -80,14 +80,40 @@ func (p *PerformanceDataPoint) validate() error {
 		return errors.New("unit can not contain numbers, semicolon or quotes")
 	}
 
-	if (p.hasMin && p.hasMax) && (p.min > p.max) {
-		return errors.New("min cannot be larger than max")
+	var min, max big.Float
+	value, _, err := big.ParseFloat(fmt.Sprint(p.value), 10, big.MaxPrec, big.ToNearestEven)
+	if err != nil {
+		return errors.Wrap(err, "can't parse value")
 	}
-	if p.hasMin && p.value < p.min {
-		return errors.New("value cannot be smaller than min")
+
+	if p.hasMin {
+		_, _, err = min.Parse(fmt.Sprint(p.min), 10)
+		if err != nil {
+			return errors.Wrap(err, "can't parse min")
+		}
+		switch min.Cmp(value) {
+		case 1:
+			return errors.New("value cannot be smaller than min")
+		default:
+		}
 	}
-	if p.hasMax && p.value > p.max {
-		return errors.New("value cannot be larger than max")
+	if p.hasMax {
+		_, _, err = max.Parse(fmt.Sprint(p.max), 10)
+		if err != nil {
+			return errors.Wrap(err, "can't parse max")
+		}
+		switch max.Cmp(value) {
+		case -1:
+			return errors.New("value cannot be larger than max")
+		default:
+		}
+	}
+	if p.hasMin && p.hasMax {
+		switch min.Cmp(&max) {
+		case 1:
+			return errors.New("min cannot be larger than max")
+		default:
+		}
 	}
 	return nil
 }
@@ -139,7 +165,7 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 		buffer.WriteByte('\'')
 	}
 	buffer.WriteByte('=')
-	buffer.WriteString(strconv.FormatFloat(p.value, 'f', -1, 64))
+	buffer.WriteString(fmt.Sprint(p.value))
 	buffer.WriteString(p.unit)
 	buffer.WriteByte(';')
 	if p.hasWarn {
@@ -214,12 +240,12 @@ type PerformanceDataPointInfo struct {
 	Label    string `yaml:"label" json:"label" xml:"label"`
 	LabelTag string `yaml:"label_tag" json:"label_tag" xml:"label_tag"`
 
-	Value float64  `yaml:"value" json:"value" xml:"value"`
-	Unit  string   `yaml:"unit" json:"unit" xml:"unit"`
-	Warn  *float64 `yaml:"warn" json:"warn" xml:"warn"`
-	Crit  *float64 `yaml:"crit" json:"crit" xml:"crit"`
-	Min   *float64 `yaml:"min" json:"min" xml:"min"`
-	Max   *float64 `yaml:"max" json:"max" xml:"max"`
+	Value interface{} `yaml:"value" json:"value" xml:"value"`
+	Unit  string      `yaml:"unit" json:"unit" xml:"unit"`
+	Warn  interface{} `yaml:"warn" json:"warn" xml:"warn"`
+	Crit  interface{} `yaml:"crit" json:"crit" xml:"crit"`
+	Min   interface{} `yaml:"min" json:"min" xml:"min"`
+	Max   interface{} `yaml:"max" json:"max" xml:"max"`
 }
 
 /*
