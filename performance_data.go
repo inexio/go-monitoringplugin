@@ -124,7 +124,7 @@ It is possible to directly add warning, critical, min and max values with the fu
 Usage:
 	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)
 */
-func NewPerformanceDataPoint(label string, value float64, unit string) *PerformanceDataPoint {
+func NewPerformanceDataPoint(label string, value interface{}, unit string) *PerformanceDataPoint {
 	return &PerformanceDataPoint{
 		label:    label,
 		value:    value,
