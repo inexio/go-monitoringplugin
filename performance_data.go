@@ -257,10 +257,10 @@ func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
 		LabelTag: p.labelTag,
 		Value:    p.value,
 		Unit:     p.unit,
-		Warn:     &p.warn,
-		Crit:     &p.crit,
-		Min:      &p.min,
-		Max:      &p.max,
+		Warn:     p.warn,
+		Crit:     p.crit,
+		Min:      p.min,
+		Max:      p.max,
 	}
 }
 
