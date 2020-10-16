@@ -80,8 +80,8 @@ func (p *PerformanceDataPoint) validate() error {
 		return errors.New("unit can not contain numbers, semicolon or quotes")
 	}
 
-	var min, max big.Float
-	value, _, err := big.ParseFloat(fmt.Sprint(p.value), 10, big.MaxPrec, big.ToNearestEven)
+	var min, max, value big.Float
+	_, _, err = value.Parse(fmt.Sprint(p.value), 10)
 	if err != nil {
 		return errors.Wrap(err, "can't parse value")
 	}
@@ -91,7 +91,7 @@ func (p *PerformanceDataPoint) validate() error {
 		if err != nil {
 			return errors.Wrap(err, "can't parse min")
 		}
-		switch min.Cmp(value) {
+		switch min.Cmp(&value) {
 		case 1:
 			return errors.New("value cannot be smaller than min")
 		default:
@@ -102,7 +102,7 @@ func (p *PerformanceDataPoint) validate() error {
 		if err != nil {
 			return errors.Wrap(err, "can't parse max")
 		}
-		switch max.Cmp(value) {
+		switch max.Cmp(&value) {
 		case -1:
 			return errors.New("value cannot be larger than max")
 		default:
