@@ -32,7 +32,7 @@ type Response struct {
 	performanceData            PerformanceData
 	outputDelimiter            string
 	performanceDataJSONLabel   bool
-	printPerformacneData       bool
+	printPerformanceData       bool
 	sortOutputMessagesByStatus bool
 }
 
@@ -52,7 +52,7 @@ func NewResponse(defaultOkMessage string) *Response {
 		statusCode:           OK,
 		defaultOkMessage:     defaultOkMessage,
 		outputDelimiter:      "\n",
-		printPerformacneData: true,
+		printPerformanceData: true,
 	}
 	response.performanceData = make(PerformanceData)
 	return response
@@ -89,7 +89,7 @@ func (r *Response) GetStatusCode() int {
 }
 
 /*
-SetPerformanceDataJSONLabel updates the JSON label.
+SetPerformanceDataJSONLabel updates the JSON metric.
 */
 func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 	r.performanceDataJSONLabel = jsonLabel
@@ -193,7 +193,7 @@ func (r *Response) OutputDelimiterMultiline() {
 PrintPerformanceData activates or deactivates printing performance data
 */
 func (r *Response) PrintPerformanceData(b bool) {
-	r.printPerformacneData = b
+	r.printPerformanceData = b
 }
 
 /*
@@ -269,7 +269,7 @@ func (r *Response) output() []byte {
 		buffer.WriteString(x.Message)
 	}
 
-	if r.printPerformacneData {
+	if r.printPerformanceData {
 		firstPoint := true
 		for _, perfDataPoint := range r.performanceData {
 			if firstPoint {

@@ -10,24 +10,29 @@ import (
 	"regexp"
 )
 
+type performanceDataPointKey struct {
+	metric string
+	label  string
+}
+
 /*
 PerformanceData is a map where all performanceDataPoints are stored. It assigns labels (string) to performanceDataPoints.
 */
-type PerformanceData map[string]PerformanceDataPoint
+type PerformanceData map[performanceDataPointKey]PerformanceDataPoint
 
 /*
 PerformanceDataPoint contains all information of one PerformanceDataPoint.
 */
 type PerformanceDataPoint struct {
-	label string
-	value interface{}
-	unit  string
-	warn  interface{} //currently we do not support ranges for warning and critical thresholds, because icinga2 does not support it
-	crit  interface{}
-	min   interface{}
-	max   interface{}
+	metric string
+	value  interface{}
+	unit   string
+	warn   interface{} //currently we do not support ranges for warning and critical thresholds, because icinga2 does not support it
+	crit   interface{}
+	min    interface{}
+	max    interface{}
 
-	labelTag string
+	label string
 
 	hasWarn bool
 	hasCrit bool
@@ -37,7 +42,7 @@ type PerformanceDataPoint struct {
 
 /*
 add adds a PerformanceDataPoint to the PerformanceData Map.
-The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same label in the PerformanceData map.
+The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same metric in the PerformanceData map.
 Usage:
 	err := PerformanceData.add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
@@ -48,10 +53,11 @@ func (p *PerformanceData) add(point *PerformanceDataPoint) error {
 	if err := point.validate(); err != nil {
 		return errors.Wrap(err, "given performance data point is not valid")
 	}
-	if _, ok := (*p)[point.label+point.labelTag]; ok {
-		return errors.New("a performance data point with this label does already exist")
+	key := performanceDataPointKey{point.metric, point.label}
+	if _, ok := (*p)[key]; ok {
+		return errors.New("a performance data point with this metric does already exist")
 	}
-	(*p)[point.label+point.labelTag] = *point
+	(*p)[key] = *point
 	return nil
 }
 
@@ -60,16 +66,24 @@ Validates a PerformanceDataPoint.
 This function is used to check if a PerformanceDataPoint is compatible with the documentation from 'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
 */
 func (p *PerformanceDataPoint) validate() error {
-	if p.label == "" {
-		return errors.New("data point label cannot be an empty string")
+	if p.metric == "" {
+		return errors.New("data point metric cannot be an empty string")
 	}
 
-	match, err := regexp.MatchString("([='])", p.label)
+	match, err := regexp.MatchString("([='|;])", p.metric)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
 	if match {
-		return errors.New("label can not contain the equal sign or single quote (')")
+		return errors.New("metric contains invalid character")
+	}
+
+	match, err = regexp.MatchString("([='|;])", p.label)
+	if err != nil {
+		return errors.Wrap(err, "error during regex match")
+	}
+	if match {
+		return errors.New("metric contains invalid character")
 	}
 
 	match, err = regexp.MatchString("([0-9;'\"])", p.unit)
@@ -126,10 +140,10 @@ Usage:
 */
 func NewPerformanceDataPoint(label string, value interface{}, unit string) *PerformanceDataPoint {
 	return &PerformanceDataPoint{
-		label:    label,
-		value:    value,
-		unit:     unit,
-		labelTag: "",
+		metric: label,
+		value:  value,
+		unit:   unit,
+		label:  "",
 	}
 }
 
@@ -147,20 +161,20 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 	var buffer bytes.Buffer
 	if jsonLabel {
 		buffer.WriteString(`'{"metric":"`)
-		buffer.WriteString(p.label)
+		buffer.WriteString(p.metric)
 		buffer.WriteByte('"')
-		if p.labelTag != "" {
-			buffer.WriteString(`,"label":"`)
-			buffer.WriteString(p.labelTag)
+		if p.label != "" {
+			buffer.WriteString(`,"metric":"`)
+			buffer.WriteString(p.label)
 			buffer.WriteByte('"')
 		}
 		buffer.WriteString("}'")
 	} else {
 		buffer.WriteByte('\'')
-		buffer.WriteString(p.label)
-		if p.labelTag != "" {
+		buffer.WriteString(p.metric)
+		if p.label != "" {
 			buffer.WriteByte('_')
-			buffer.WriteString(p.labelTag)
+			buffer.WriteString(p.label)
 		}
 		buffer.WriteByte('\'')
 	}
@@ -224,11 +238,11 @@ func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
 }
 
 /*
-SetLabelTag adds a tag to the performance data point
+SetLabel adds a tag to the performance data point
 If one tag is added more than once, the value before will be overwritten
 */
-func (p *PerformanceDataPoint) SetLabelTag(labelTag string) *PerformanceDataPoint {
-	p.labelTag = labelTag
+func (p *PerformanceDataPoint) SetLabel(label string) *PerformanceDataPoint {
+	p.label = label
 	return p
 }
 
@@ -237,8 +251,8 @@ PerformanceDataPointInfo has all information to one performance data point as ex
 PerformanceDataPoint.GetInfo()
 */
 type PerformanceDataPointInfo struct {
-	Label    string `yaml:"label" json:"label" xml:"label"`
-	LabelTag string `yaml:"label_tag" json:"label_tag" xml:"label_tag"`
+	Metric string `yaml:"metric" json:"metric" xml:"metric"`
+	Label  string `yaml:"label" json:"label" xml:"label"`
 
 	Value interface{} `yaml:"value" json:"value" xml:"value"`
 	Unit  string      `yaml:"unit" json:"unit" xml:"unit"`
@@ -253,14 +267,14 @@ GetInfo returns all information for a performance data point.
 */
 func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
 	return PerformanceDataPointInfo{
-		Label:    p.label,
-		LabelTag: p.labelTag,
-		Value:    p.value,
-		Unit:     p.unit,
-		Warn:     p.warn,
-		Crit:     p.crit,
-		Min:      p.min,
-		Max:      p.max,
+		Metric: p.metric,
+		Label:  p.label,
+		Value:  p.value,
+		Unit:   p.unit,
+		Warn:   p.warn,
+		Crit:   p.crit,
+		Min:    p.min,
+		Max:    p.max,
 	}
 }
 
