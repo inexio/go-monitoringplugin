@@ -37,7 +37,7 @@ type Response struct {
 }
 
 /*
-OutputMessage represents a message of the response. It also contains a status code.
+OutputMessage represents a message of the response. It contains a message and a status code.
 */
 type OutputMessage struct {
 	Status  int    `yaml:"status" json:"status" xml:"status"`
