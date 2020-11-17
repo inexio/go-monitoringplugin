@@ -37,7 +37,7 @@ type Response struct {
 }
 
 /*
-OutputMessage represents a message of the response.
+OutputMessage represents a message of the response. It also contains a status code.
 */
 type OutputMessage struct {
 	Status  int    `yaml:"status" json:"status" xml:"status"`
@@ -311,7 +311,7 @@ func (r *Response) OutputAndExit() {
 }
 
 /*
-ResponseInfo has all available information for a response.
+ResponseInfo has all available information for a response. It also contains the RawOutput.
 */
 type ResponseInfo struct {
 	StatusCode      int                        `yaml:"status_code" json:"status_code" xml:"status_code"`
