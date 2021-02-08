@@ -164,7 +164,7 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 		buffer.WriteString(p.metric)
 		buffer.WriteByte('"')
 		if p.label != "" {
-			buffer.WriteString(`,"metric":"`)
+			buffer.WriteString(`,"label":"`)
 			buffer.WriteString(p.label)
 			buffer.WriteByte('"')
 		}
