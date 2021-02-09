@@ -1,4 +1,5 @@
 # go-monitoringplugin
+
 [![Go Report Card](https://goreportcard.com/badge/github.com/inexio/go-monitoringplugin)](https://goreportcard.com/report/github.com/inexio/go-monitoringplugin)
 [![GitHub license](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/inexio/go-monitoringplugin/blob/master/LICENSE)
 ## Description
