@@ -173,7 +173,7 @@ func TestPerformanceDataPoint_output(t *testing.T) {
 
 	tag := "tag"
 	p.SetLabel(tag)
-	regex = fmt.Sprintf(`'{"metric":"%s","metric":"%s"}'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
+	regex = fmt.Sprintf(`'{"metric":"%s","label":"%s"}'=%g%s;%g;%g;%g;%g`, label, tag, value, unit, warn, crit, min, max)
 	match, err = regexp.Match(regex, p.output(true))
 	if err != nil {
 		t.Error(err.Error())
