@@ -6,6 +6,7 @@ import (
 	"math/big"
 )
 
+// CheckThresholds contains all threshold values
 type CheckThresholds struct {
 	WarningMin  interface{} `json:"warningMin" xml:"warningMin"`
 	WarningMax  interface{} `json:"warningMax" xml:"warningMax"`
