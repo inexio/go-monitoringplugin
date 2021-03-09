@@ -6,6 +6,7 @@ package monitoringplugin
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"sort"
 	"strings"
@@ -325,4 +326,16 @@ GetInfo returns all information for a response.
 */
 func (r *Response) GetInfo() ResponseInfo {
 	return ResponseInfo{RawOutput: string(r.output()), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo(), Messages: r.getOutputMessagesSortedByStatus()}
+}
+
+// CheckThresholds checks if the value exceeds the given thresholds and updates the response
+func (r *Response) CheckThresholds(thresholds CheckThresholds, value interface{}, name string) error {
+	res, err := thresholds.CheckValue(value)
+	if err != nil {
+		return errors.Wrap(err, "failed to check value against threshold")
+	}
+	if res != OK {
+		r.UpdateStatus(res, name+" is outside of threshold")
+	}
+	return nil
 }
