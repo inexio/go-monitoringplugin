@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"math/big"
+	"reflect"
 	"regexp"
+	"strconv"
 )
 
 type performanceDataPointKey struct {
@@ -179,7 +181,15 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 		buffer.WriteByte('\'')
 	}
 	buffer.WriteByte('=')
-	buffer.WriteString(fmt.Sprint(p.value))
+
+	kind := reflect.ValueOf(p.value).Kind()
+	switch kind {
+	case reflect.Float64:
+		buffer.WriteString(strconv.FormatFloat(p.value.(float64), 'f', -1, 64))
+	default:
+		buffer.WriteString(fmt.Sprint(p.value))
+	}
+
 	buffer.WriteString(p.unit)
 	buffer.WriteByte(';')
 	if p.hasWarn {
