@@ -1,5 +1,3 @@
-/* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
-
 //Package monitoringplugin provides for writing monitoring check plugins for nagios, icinga2, zabbix, etc
 package monitoringplugin
 
@@ -23,30 +21,29 @@ const (
 	UNKNOWN = 3
 )
 
-/*
-Response is the main type that is responsible for the check plugin Response. It stores the current status code, output messages, performance data and the output message delimiter.
-*/
+// Response is the main type that is responsible for the check plugin Response.
+// It stores the current status code, output messages, performance data and the output message delimiter.
 type Response struct {
 	statusCode                 int
 	defaultOkMessage           string
 	outputMessages             []OutputMessage
-	performanceData            PerformanceData
+	performanceData            performanceData
 	outputDelimiter            string
 	performanceDataJSONLabel   bool
 	printPerformanceData       bool
 	sortOutputMessagesByStatus bool
 }
 
-/*
-OutputMessage represents a message of the response. It contains a message and a status code.
-*/
+// OutputMessage represents a message of the response. It contains a message and a status code.
 type OutputMessage struct {
 	Status  int    `yaml:"status" json:"status" xml:"status"`
 	Message string `yaml:"message" json:"message" xml:"message"`
 }
 
 /*
-NewResponse creates a new Response and sets the default OK message to the given string. The default OK message will be displayed together with the other output messages, but only if the status is still OK when the check exits.
+NewResponse creates a new Response and sets the default OK message to the given string.
+The default OK message will be displayed together with the other output messages, but only
+if the status is still OK when the check exits.
 */
 func NewResponse(defaultOkMessage string) *Response {
 	response := &Response{
@@ -55,12 +52,13 @@ func NewResponse(defaultOkMessage string) *Response {
 		outputDelimiter:      "\n",
 		printPerformanceData: true,
 	}
-	response.performanceData = make(PerformanceData)
+	response.performanceData = make(performanceData)
 	return response
 }
 
 /*
-AddPerformanceDataPoint adds a PerformanceDataPoint to the PerformanceData map, using PerformanceData.add(*PerformanceDataPoint).
+AddPerformanceDataPoint adds a PerformanceDataPoint to the performanceData map,
+using performanceData.add(*PerformanceDataPoint).
 Usage:
 	err := Response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
@@ -68,11 +66,28 @@ Usage:
 	}
 */
 func (r *Response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
-	return r.performanceData.add(point)
+	err := r.performanceData.add(point)
+	if err != nil {
+		return errors.Wrap(err, "failed to add performance data point")
+	}
+
+	if !point.Thresholds.IsEmpty() {
+		name := point.Metric
+		if point.Label != "" {
+			name += " (" + point.Label + ")"
+		}
+		err = r.CheckThresholds(point.Thresholds, point.Value, name)
+		if err != nil {
+			return errors.Wrap(err, "failed to check thresholds")
+		}
+	}
+
+	return nil
 }
 
 /*
-UpdateStatus updates the exit status of the Response and adds a statusMessage to the outputMessages that will be displayed when the check exits.
+UpdateStatus updates the exit status of the Response and adds a statusMessage to the outputMessages that
+will be displayed when the check exits.
 See updateStatusCode(int) for a detailed description of the algorithm that is used to update the status code.
 */
 func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
@@ -82,16 +97,12 @@ func (r *Response) UpdateStatus(statusCode int, statusMessage string) {
 	}
 }
 
-/*
-GetStatusCode returns the current status code.
-*/
+// GetStatusCode returns the current status code.
 func (r *Response) GetStatusCode() int {
 	return r.statusCode
 }
 
-/*
-SetPerformanceDataJSONLabel updates the JSON metric.
-*/
+// SetPerformanceDataJSONLabel updates the JSON metric.
 func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 	r.performanceDataJSONLabel = jsonLabel
 }
@@ -106,7 +117,8 @@ Everything else is also mapped to UNKNOWN.
 
 UpdateStatus uses the following algorithm to update the exit status:
 CRITICAL > UNKNOWN > WARNING > OK
-Everything "left" from the current status code is seen as worse than the current one. If the function wants to set a status code, it will only update it if the new status code is "left" of the current one.
+Everything "left" from the current status code is seen as worse than the current one.
+If the function wants to set a status code, it will only update it if the new status code is "left" of the current one.
 Example:
 	//current status code = 1
 	Response.updateStatusCode(0) //nothing changes
@@ -132,9 +144,7 @@ func (r *Response) updateStatusCode(statusCode int) {
 	}
 }
 
-/*
-UpdateStatusIf calls UpdateStatus(statusCode, statusMessage) if the given condition is true.
-*/
+// UpdateStatusIf calls UpdateStatus(statusCode, statusMessage) if the given condition is true.
 func (r *Response) UpdateStatusIf(condition bool, statusCode int, statusMessage string) bool {
 	if condition {
 		r.UpdateStatus(statusCode, statusMessage)
@@ -142,9 +152,7 @@ func (r *Response) UpdateStatusIf(condition bool, statusCode int, statusMessage 
 	return condition
 }
 
-/*
-UpdateStatusIfNot calls UpdateStatus(statusCode, statusMessage) if the given condition is false.
-*/
+// UpdateStatusIfNot calls UpdateStatus(statusCode, statusMessage) if the given condition is false.
 func (r *Response) UpdateStatusIfNot(condition bool, statusCode int, statusMessage string) bool {
 	if !condition {
 		r.UpdateStatus(statusCode, statusMessage)
@@ -152,9 +160,7 @@ func (r *Response) UpdateStatusIfNot(condition bool, statusCode int, statusMessa
 	return !condition
 }
 
-/*
-UpdateStatusOnError calls UpdateStatus(statusCode, statusMessage) if the given error is not nil.
-*/
+// UpdateStatusOnError calls UpdateStatus(statusCode, statusMessage) if the given error is not nil.
 func (r *Response) UpdateStatusOnError(err error, statusCode int, statusMessage string, includeErrorMessage bool) bool {
 	x := err != nil
 	if x {
@@ -172,41 +178,34 @@ func (r *Response) UpdateStatusOnError(err error, statusCode int, statusMessage 
 }
 
 /*
-SetOutputDelimiter is used to set the delimiter that is used to separate the outputMessages that will be displayed when the check plugin exits. The default value is a linebreak (\n)
+SetOutputDelimiter is used to set the delimiter that is used to separate the outputMessages that will be displayed when
+the check plugin exits. The default value is a linebreak (\n)
 It can be set to any string.
 Example:
 	Response.SetOutputDelimiter(" / ")
 	//this results in the output having the following format:
-	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | PerformanceData
+	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | performanceData
 */
 func (r *Response) SetOutputDelimiter(delimiter string) {
 	r.outputDelimiter = delimiter
 }
 
-/*
-OutputDelimiterMultiline sets the outputDelimiter to "\n". (See Response.SetOutputDelimiter(string))
-*/
+// OutputDelimiterMultiline sets the outputDelimiter to "\n". (See Response.SetOutputDelimiter(string))
 func (r *Response) OutputDelimiterMultiline() {
 	r.SetOutputDelimiter("\n")
 }
 
-/*
-PrintPerformanceData activates or deactivates printing performance data
-*/
+// PrintPerformanceData activates or deactivates printing performance data
 func (r *Response) PrintPerformanceData(b bool) {
 	r.printPerformanceData = b
 }
 
-/*
-SortOutputMessagesByStatus sorts the output messages according to their status.
-*/
+// SortOutputMessagesByStatus sorts the output messages according to their status.
 func (r *Response) SortOutputMessagesByStatus(b bool) {
 	r.sortOutputMessagesByStatus = b
 }
 
-/*
-This function is used to map the status code to a string.
-*/
+// This function is used to map the status code to a string.
 func statusCode2Text(statusCode int) string {
 	switch {
 	case statusCode == 0:
@@ -237,16 +236,12 @@ func String2StatusCode(s string) int {
 	}
 }
 
-/*
-This function returns the output that will be returned by the check plugin as a string.
-*/
+// This function returns the output that will be returned by the check plugin as a string.
 func (r *Response) outputString() string {
 	return string(r.output())
 }
 
-/*
-This function returns the output that will be returned by the check plugin.
-*/
+// This function returns the output that will be returned by the check plugin.
 func (r *Response) output() []byte {
 	var buffer bytes.Buffer
 	buffer.WriteString(statusCode2Text(r.statusCode))
@@ -299,7 +294,8 @@ func (r *Response) getOutputMessagesSortedByStatus() []OutputMessage {
 }
 
 /*
-OutputAndExit generates the output string and prints it to stdout. After that the check plugin exits with the current exit code.
+OutputAndExit generates the output string and prints it to stdout.
+After that the check plugin exits with the current exit code.
 Example:
 	Response := NewResponse("everything checked!")
 	defer Response.OutputAndExit()
@@ -311,25 +307,25 @@ func (r *Response) OutputAndExit() {
 	os.Exit(r.statusCode)
 }
 
-/*
-ResponseInfo has all available information for a response. It also contains the RawOutput.
-*/
+// ResponseInfo has all available information for a response. It also contains the RawOutput.
 type ResponseInfo struct {
-	StatusCode      int                        `yaml:"status_code" json:"status_code" xml:"status_code"`
-	PerformanceData []PerformanceDataPointInfo `yaml:"performance_data" json:"performance_data" xml:"performance_data"`
-	RawOutput       string                     `yaml:"raw_output" json:"raw_output" xml:"raw_output"`
-	Messages        []OutputMessage            `yaml:"messages" json:"messages" xml:"messages"`
+	StatusCode      int                    `yaml:"status_code" json:"status_code" xml:"status_code"`
+	PerformanceData []PerformanceDataPoint `yaml:"performance_data" json:"performance_data" xml:"performance_data"`
+	RawOutput       string                 `yaml:"raw_output" json:"raw_output" xml:"raw_output"`
+	Messages        []OutputMessage        `yaml:"messages" json:"messages" xml:"messages"`
 }
 
-/*
-GetInfo returns all information for a response.
-*/
+// GetInfo returns all information for a response.
 func (r *Response) GetInfo() ResponseInfo {
-	return ResponseInfo{RawOutput: string(r.output()), StatusCode: r.statusCode, PerformanceData: r.performanceData.GetInfo(), Messages: r.getOutputMessagesSortedByStatus()}
+	return ResponseInfo{
+		RawOutput:       string(r.output()),
+		StatusCode:      r.statusCode,
+		PerformanceData: r.performanceData.getInfo(),
+		Messages:        r.getOutputMessagesSortedByStatus()}
 }
 
-// CheckThresholds checks if the value exceeds the given thresholds and updates the response
-func (r *Response) CheckThresholds(thresholds CheckThresholds, value interface{}, name string) error {
+// Thresholds checks if the value exceeds the given thresholds and updates the response
+func (r *Response) CheckThresholds(thresholds Thresholds, value interface{}, name string) error {
 	res, err := thresholds.CheckValue(value)
 	if err != nil {
 		return errors.Wrap(err, "failed to check value against threshold")

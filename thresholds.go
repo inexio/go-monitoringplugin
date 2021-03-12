@@ -6,16 +6,26 @@ import (
 	"math/big"
 )
 
-// CheckThresholds contains all threshold values
-type CheckThresholds struct {
+// Thresholds contains all threshold values
+type Thresholds struct {
 	WarningMin  interface{} `json:"warningMin" xml:"warningMin"`
 	WarningMax  interface{} `json:"warningMax" xml:"warningMax"`
 	CriticalMin interface{} `json:"criticalMin" xml:"criticalMin"`
 	CriticalMax interface{} `json:"criticalMax" xml:"criticalMax"`
 }
 
-// Validate checks if the CheckThresholds contains some invalid combination of warning and critical values
-func (c *CheckThresholds) Validate() error {
+// NewThresholds creates a new threshold
+func NewThresholds(warningMin, warningMax, criticalMin, criticalMax interface{}) Thresholds {
+	return Thresholds{
+		WarningMin:  warningMin,
+		WarningMax:  warningMax,
+		CriticalMin: criticalMin,
+		CriticalMax: criticalMax,
+	}
+}
+
+// Validate checks if the Thresholds contains some invalid combination of warning and critical values
+func (c *Thresholds) Validate() error {
 	if c.WarningMin != nil && c.WarningMax != nil {
 		var min, max big.Float
 		_, _, err := min.Parse(fmt.Sprint(c.WarningMin), 10)
@@ -59,7 +69,7 @@ func (c *CheckThresholds) Validate() error {
 			return errors.Wrap(err, "can't parse critical min")
 		}
 
-		if res := cMin.Cmp(&wMin); res != -1 {
+		if res := cMin.Cmp(&wMin); res == 1 {
 			return errors.New("critical and warning min are invalid")
 		}
 	}
@@ -75,7 +85,7 @@ func (c *CheckThresholds) Validate() error {
 			return errors.Wrap(err, "can't parse critical min")
 		}
 
-		if res := cMax.Cmp(&wMax); res != 1 {
+		if res := cMax.Cmp(&wMax); res == -1 {
 			return errors.New("critical and warning max are invalid")
 		}
 	}
@@ -83,13 +93,23 @@ func (c *CheckThresholds) Validate() error {
 	return nil
 }
 
+// HasWarning checks if a warning threshold is set
+func (c *Thresholds) HasWarning() bool {
+	return c.WarningMax != nil || c.WarningMin != nil
+}
+
+// HasCritical checks if a critical threshold is set
+func (c *Thresholds) HasCritical() bool {
+	return c.CriticalMax != nil || c.CriticalMin != nil
+}
+
 // IsEmpty checks if the thresholds are empty
-func (c *CheckThresholds) IsEmpty() bool {
+func (c *Thresholds) IsEmpty() bool {
 	return c.WarningMin == nil && c.WarningMax == nil && c.CriticalMin == nil && c.CriticalMax == nil
 }
 
 // CheckValue checks if the input is violating the thresholds
-func (c *CheckThresholds) CheckValue(v interface{}) (int, error) {
+func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 	var value, wMin, wMax, cMin, cMax big.Float
 	_, _, err := value.Parse(fmt.Sprint(v), 10)
 	if err != nil {
@@ -132,4 +152,36 @@ func (c *CheckThresholds) CheckValue(v interface{}) (int, error) {
 		}
 	}
 	return OK, nil
+}
+
+func (c *Thresholds) getWarning() string {
+	return getRange(c.WarningMin, c.WarningMax)
+}
+
+func (c *Thresholds) getCritical() string {
+	return getRange(c.CriticalMin, c.CriticalMax)
+}
+
+func getRange(min, max interface{}) string {
+	if min == nil && max == nil {
+		return ""
+	}
+
+	var res string
+
+	if min != nil {
+		minString := fmt.Sprint(min)
+		if minString != "0" {
+			res += minString + ":"
+		}
+	} else {
+		res += "~:"
+	}
+
+	if max != nil {
+		maxString := fmt.Sprint(max)
+		res += maxString
+	}
+
+	return res
 }

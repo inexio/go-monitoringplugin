@@ -1,5 +1,3 @@
-/* Copyright (c) 2019, inexio GmbH, BSD 2-Clause License */
-
 package monitoringplugin
 
 import (
@@ -9,6 +7,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -216,9 +215,24 @@ func TestString2StatusCode(t *testing.T) {
 }
 
 func TestOutputPerformanceData(t *testing.T) {
-	p1 := NewPerformanceDataPoint("label1", 10, "%").SetMin(0).SetMax(100).SetWarn(80).SetCrit(90)
-	p2 := NewPerformanceDataPoint("label2", 20, "%").SetMin(0).SetMax(100).SetWarn(80).SetCrit(90)
-	p3 := NewPerformanceDataPoint("label3", 30, "%").SetMin(0).SetMax(100).SetWarn(80).SetCrit(90)
+	p1 := NewPerformanceDataPoint("label1", 10).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
+	p2 := NewPerformanceDataPoint("label2", 20).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
+	p3 := NewPerformanceDataPoint("label3", 30).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
 
 	defaultMessage := "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
@@ -246,13 +260,63 @@ func TestOutputPerformanceData(t *testing.T) {
 		t.Error("cmd.Run() returned an exitcode != 0, but exit code 0 was expected")
 	}
 
-	output := outputB.Bytes()
-	match, err := regexp.Match("^OK: "+defaultMessage+" | "+p1.outputString(false)+" "+p2.outputString(false)+" "+p3.outputString(false)+"\n", output)
-	if err != nil {
-		t.Error(err.Error())
+	output := outputB.String()
+	if !strings.HasPrefix(output, "OK: "+defaultMessage+" | ") {
+		t.Error("output did not match the expected regex")
 	}
-	if !match {
-		t.Error("performance data output did not match the expected regex")
+}
+
+func TestOutputPerformanceDataThresholdsExceeded(t *testing.T) {
+	p1 := NewPerformanceDataPoint("label1", 10).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
+	p2 := NewPerformanceDataPoint("label2", 20).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
+	p3 := NewPerformanceDataPoint("label3", 85).
+		SetUnit("%").
+		SetMin(0).
+		SetMax(100).
+		SetThresholds(
+			NewThresholds(0, 80, 0, 90))
+
+	defaultMessage := "OKTest"
+	if os.Getenv("EXECUTE_PLUGIN") == "1" {
+		r := NewResponse(defaultMessage)
+		err := r.AddPerformanceDataPoint(p1)
+		if err != nil {
+			r.UpdateStatus(3, "error during add performance data point")
+		}
+		err = r.AddPerformanceDataPoint(p2)
+		if err != nil {
+			r.UpdateStatus(3, "error during add performance data point")
+		}
+		err = r.AddPerformanceDataPoint(p3)
+		if err != nil {
+			r.UpdateStatus(3, "error during add performance data point")
+		}
+		r.OutputAndExit()
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=TestOutputPerformanceDataThresholdsExceeded")
+	cmd.Env = append(os.Environ(), "EXECUTE_PLUGIN=1")
+	var outputB bytes.Buffer
+	cmd.Stdout = &outputB
+	err := cmd.Run()
+	if err == nil {
+		t.Error("cmd.Run() returned an exitcode = 0, but exit code 1 was expected")
+	} else if err.Error() != "exit status 1" {
+		t.Error("cmd.Run() returned an exitcode != 1, but exit code 1 was expected")
+	}
+
+	output := outputB.String()
+	if !strings.HasPrefix(output, "WARNING: label3 is outside of threshold | ") {
+		t.Error("output did not match the expected regex")
 	}
 }
 

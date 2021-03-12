@@ -6,7 +6,7 @@ import (
 )
 
 func TestValidateThresholds(t *testing.T) {
-	th1 := CheckThresholds{
+	th1 := Thresholds{
 		WarningMin:  5,
 		WarningMax:  10,
 		CriticalMin: 3,
@@ -14,41 +14,49 @@ func TestValidateThresholds(t *testing.T) {
 	}
 	assert.NoError(t, th1.Validate())
 
-	th2 := CheckThresholds{}
+	th2 := Thresholds{
+		WarningMin:  0,
+		WarningMax:  10,
+		CriticalMin: 0,
+		CriticalMax: 12,
+	}
 	assert.NoError(t, th2.Validate())
 
-	th3 := CheckThresholds{
-		WarningMax: 3,
-	}
+	th3 := Thresholds{}
 	assert.NoError(t, th3.Validate())
 
-	th4 := CheckThresholds{
+	th4 := Thresholds{
+		WarningMax: 3,
+	}
+	assert.NoError(t, th4.Validate())
+
+	th5 := Thresholds{
 		WarningMin: 2,
 		WarningMax: 1,
 	}
-	assert.Error(t, th4.Validate())
-
-	th5 := CheckThresholds{
-		CriticalMin: 2,
-		CriticalMax: 1,
-	}
 	assert.Error(t, th5.Validate())
 
-	th6 := CheckThresholds{
-		WarningMin:  1,
+	th6 := Thresholds{
 		CriticalMin: 2,
+		CriticalMax: 1,
 	}
 	assert.Error(t, th6.Validate())
 
-	th7 := CheckThresholds{
+	th7 := Thresholds{
+		WarningMin:  1,
+		CriticalMin: 2,
+	}
+	assert.Error(t, th7.Validate())
+
+	th8 := Thresholds{
 		WarningMax:  2,
 		CriticalMax: 1,
 	}
-	assert.Error(t, th7.Validate())
+	assert.Error(t, th8.Validate())
 }
 
 func TestCheckThresholds(t *testing.T) {
-	th1 := CheckThresholds{
+	th1 := Thresholds{
 		WarningMin:  5,
 		WarningMax:  10,
 		CriticalMin: 3,
@@ -72,6 +80,17 @@ func TestCheckThresholds(t *testing.T) {
 	assert.Equal(t, CRITICAL, res)
 
 	res, err = th1.CheckValue(13)
+	assert.NoError(t, err)
+	assert.Equal(t, CRITICAL, res)
+
+	th2 := Thresholds{
+		WarningMin:  5,
+		WarningMax:  10,
+		CriticalMin: 5,
+		CriticalMax: 12,
+	}
+
+	res, err = th2.CheckValue(4)
 	assert.NoError(t, err)
 	assert.Equal(t, CRITICAL, res)
 }

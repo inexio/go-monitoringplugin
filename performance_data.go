@@ -1,5 +1,3 @@
-/* Copyright (c) 2020, inexio GmbH, BSD 2-Clause License */
-
 package monitoringplugin
 
 import (
@@ -7,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"math/big"
-	"reflect"
 	"regexp"
 	"strconv"
 )
@@ -17,45 +14,25 @@ type performanceDataPointKey struct {
 	label  string
 }
 
-/*
-PerformanceData is a map where all performanceDataPoints are stored. It assigns labels (string) to performanceDataPoints.
-*/
-type PerformanceData map[performanceDataPointKey]PerformanceDataPoint
+// performanceData is a map where all performanceDataPoints are stored.
+// It assigns labels (string) to performanceDataPoints.
+type performanceData map[performanceDataPointKey]PerformanceDataPoint
 
 /*
-PerformanceDataPoint contains all information of one PerformanceDataPoint.
-*/
-type PerformanceDataPoint struct {
-	metric string
-	value  interface{}
-	unit   string
-	warn   interface{} //currently we do not support ranges for warning and critical thresholds, because icinga2 does not support it
-	crit   interface{}
-	min    interface{}
-	max    interface{}
-
-	label string
-
-	hasWarn bool
-	hasCrit bool
-	hasMin  bool
-	hasMax  bool
-}
-
-/*
-add adds a PerformanceDataPoint to the PerformanceData Map.
-The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the same metric in the PerformanceData map.
+add adds a PerformanceDataPoint to the performanceData Map.
+The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the
+same metric in the performanceData map.
 Usage:
-	err := PerformanceData.add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
+	err := performanceData.add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
 	}
 */
-func (p *PerformanceData) add(point *PerformanceDataPoint) error {
-	if err := point.validate(); err != nil {
+func (p *performanceData) add(point *PerformanceDataPoint) error {
+	if err := point.Validate(); err != nil {
 		return errors.Wrap(err, "given performance data point is not valid")
 	}
-	key := performanceDataPointKey{point.metric, point.label}
+	key := performanceDataPointKey{point.Metric, point.Label}
 	if _, ok := (*p)[key]; ok {
 		return errors.New("a performance data point with this metric does already exist")
 	}
@@ -63,16 +40,41 @@ func (p *PerformanceData) add(point *PerformanceDataPoint) error {
 	return nil
 }
 
+// getInfo returns all information for performance data.
+func (p performanceData) getInfo() []PerformanceDataPoint {
+	var info []PerformanceDataPoint
+	for _, pd := range p {
+		info = append(info, pd)
+	}
+	return info
+}
+
+// PerformanceDataPoint contains all information of one PerformanceDataPoint.
+type PerformanceDataPoint struct {
+	Metric     string      `json:"metric" xml:"metric"`
+	Label      string      `json:"label" xml:"label"`
+	Value      interface{} `json:"value" xml:"value"`
+	Unit       string      `json:"unit" xml:"unit"`
+	Thresholds Thresholds  `json:"thresholds" xml:"thresholds"`
+	Min        interface{} `json:"min" xml:"min"`
+	Max        interface{} `json:"max" xml:"max"`
+}
+
 /*
-Validates a PerformanceDataPoint.
-This function is used to check if a PerformanceDataPoint is compatible with the documentation from 'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
+Validate validates a PerformanceDataPoint.
+This function is used to check if a PerformanceDataPoint is compatible with the documentation from
+'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
 */
-func (p *PerformanceDataPoint) validate() error {
-	if p.metric == "" {
+func (p *PerformanceDataPoint) Validate() error {
+	if err := p.Thresholds.Validate(); err != nil {
+		return errors.Wrap(err, "thresholds are invalid")
+	}
+
+	if p.Metric == "" {
 		return errors.New("data point metric cannot be an empty string")
 	}
 
-	match, err := regexp.MatchString("([='|;])", p.metric)
+	match, err := regexp.MatchString("([='|;])", p.Metric)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
@@ -80,7 +82,7 @@ func (p *PerformanceDataPoint) validate() error {
 		return errors.New("metric contains invalid character")
 	}
 
-	match, err = regexp.MatchString("([='|;])", p.label)
+	match, err = regexp.MatchString("([='|;])", p.Label)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
@@ -88,7 +90,7 @@ func (p *PerformanceDataPoint) validate() error {
 		return errors.New("metric contains invalid character")
 	}
 
-	match, err = regexp.MatchString("([0-9;'\"])", p.unit)
+	match, err = regexp.MatchString("([0-9;'\"])", p.Unit)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
@@ -97,13 +99,13 @@ func (p *PerformanceDataPoint) validate() error {
 	}
 
 	var min, max, value big.Float
-	_, _, err = value.Parse(fmt.Sprint(p.value), 10)
+	_, _, err = value.Parse(fmt.Sprint(p.Value), 10)
 	if err != nil {
 		return errors.Wrap(err, "can't parse value")
 	}
 
-	if p.hasMin {
-		_, _, err = min.Parse(fmt.Sprint(p.min), 10)
+	if p.Min != nil {
+		_, _, err = min.Parse(fmt.Sprint(p.Min), 10)
 		if err != nil {
 			return errors.Wrap(err, "can't parse min")
 		}
@@ -113,8 +115,8 @@ func (p *PerformanceDataPoint) validate() error {
 		default:
 		}
 	}
-	if p.hasMax {
-		_, _, err = max.Parse(fmt.Sprint(p.max), 10)
+	if p.Max != nil {
+		_, _, err = max.Parse(fmt.Sprint(p.Max), 10)
 		if err != nil {
 			return errors.Wrap(err, "can't parse max")
 		}
@@ -124,177 +126,121 @@ func (p *PerformanceDataPoint) validate() error {
 		default:
 		}
 	}
-	if p.hasMin && p.hasMax {
+	if p.Min != nil && p.Max != nil {
 		switch min.Cmp(&max) {
 		case 1:
 			return errors.New("min cannot be larger than max")
 		default:
 		}
 	}
+
+	if !p.Thresholds.IsEmpty() {
+		err = p.Thresholds.Validate()
+		if err != nil {
+			return errors.Wrap(err, "thresholds are invalid")
+		}
+	}
+
 	return nil
 }
 
 /*
-NewPerformanceDataPoint creates a new PerformanceDataPoint. Label and value are mandatory but are not checked at this point, the performanceDatePoint's validation is checked later when it is added to the PerformanceData list in the function PerformanceData.add(*PerformanceDataPoint).
-It is possible to directly add warning, critical, min and max values with the functions SetWarn(int), SetCrit(int), SetMin(int) and SetMax(int).
+NewPerformanceDataPoint creates a new PerformanceDataPoint. Metric and value are mandatory but are not checked at this
+point, the performanceDatePoint's validation is checked later when it is added to the performanceData list in the
+function performanceData.add(*PerformanceDataPoint).
+It is possible to directly add thresholds, min and max values with the functions SetThresholds(Thresholds),
+SetMin(int) and SetMax(int).
 Usage:
-	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55, "%").SetWarn(80).SetCrit(90)
+	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55).SetUnit("%")
 */
-func NewPerformanceDataPoint(label string, value interface{}, unit string) *PerformanceDataPoint {
+func NewPerformanceDataPoint(metric string, value interface{}) *PerformanceDataPoint {
 	return &PerformanceDataPoint{
-		metric: label,
-		value:  value,
-		unit:   unit,
-		label:  "",
+		Metric: metric,
+		Value:  value,
 	}
 }
 
-/*
-This function returns the PerformanceDataPoint in the specified format as a string.
-*/
-func (p *PerformanceDataPoint) outputString(jsonLabel bool) string {
-	return string(p.output(jsonLabel))
+func (p *PerformanceDataPoint) SetUnit(unit string) *PerformanceDataPoint {
+	p.Unit = unit
+	return p
 }
 
-/*
-This function returns the PerformanceDataPoint in the specified format that will be returned by the check plugin.
-*/
+// SetMin sets minimum value.
+func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
+	p.Min = min
+	return p
+}
+
+// SetMax sets maximum value.
+func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
+	p.Max = max
+	return p
+}
+
+// SetLabel adds a tag to the performance data point
+// If one tag is added more than once, the value before will be overwritten
+func (p *PerformanceDataPoint) SetLabel(label string) *PerformanceDataPoint {
+	p.Label = label
+	return p
+}
+
+// SetThresholds sets the thresholds for the performance data point
+func (p *PerformanceDataPoint) SetThresholds(thresholds Thresholds) *PerformanceDataPoint {
+	p.Thresholds = thresholds
+	return p
+}
+
+// This function returns the PerformanceDataPoint in the specified format that will be returned by the check plugin.
 func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 	var buffer bytes.Buffer
 	if jsonLabel {
 		buffer.WriteString(`'{"metric":"`)
-		buffer.WriteString(p.metric)
+		buffer.WriteString(p.Metric)
 		buffer.WriteByte('"')
-		if p.label != "" {
+		if p.Label != "" {
 			buffer.WriteString(`,"label":"`)
-			buffer.WriteString(p.label)
+			buffer.WriteString(p.Label)
 			buffer.WriteByte('"')
 		}
 		buffer.WriteString("}'")
 	} else {
 		buffer.WriteByte('\'')
-		buffer.WriteString(p.metric)
-		if p.label != "" {
+		buffer.WriteString(p.Metric)
+		if p.Label != "" {
 			buffer.WriteByte('_')
-			buffer.WriteString(p.label)
+			buffer.WriteString(p.Label)
 		}
 		buffer.WriteByte('\'')
 	}
 	buffer.WriteByte('=')
 
-	kind := reflect.ValueOf(p.value).Kind()
-	switch kind {
-	case reflect.Float64:
-		buffer.WriteString(strconv.FormatFloat(p.value.(float64), 'f', -1, 64))
+	switch p.Value.(type) {
+	case float64:
+		buffer.WriteString(strconv.FormatFloat(p.Value.(float64), 'f', -1, 64))
 	default:
-		buffer.WriteString(fmt.Sprint(p.value))
+		buffer.WriteString(fmt.Sprint(p.Value))
 	}
 
-	buffer.WriteString(p.unit)
-	buffer.WriteByte(';')
-	if p.hasWarn {
-		buffer.WriteString(fmt.Sprintf("%g", p.warn))
-	}
-	buffer.WriteByte(';')
-	if p.hasCrit {
-		buffer.WriteString(fmt.Sprintf("%g", p.crit))
-	}
-	buffer.WriteByte(';')
-	if p.hasMin {
-		buffer.WriteString(fmt.Sprintf("%g", p.min))
-	}
-	buffer.WriteByte(';')
-	if p.hasMax {
-		buffer.WriteString(fmt.Sprintf("%g", p.max))
+	buffer.WriteString(p.Unit)
+
+	if !p.Thresholds.IsEmpty() || p.Max != nil || p.Min != nil {
+		buffer.WriteByte(';')
+		if p.Thresholds.HasWarning() {
+			buffer.WriteString(p.Thresholds.getWarning())
+		}
+		buffer.WriteByte(';')
+		if p.Thresholds.HasCritical() {
+			buffer.WriteString(p.Thresholds.getCritical())
+		}
+		buffer.WriteByte(';')
+		if p.Min != nil {
+			buffer.WriteString(fmt.Sprintf("%g", p.Min))
+		}
+		buffer.WriteByte(';')
+		if p.Max != nil {
+			buffer.WriteString(fmt.Sprintf("%g", p.Max))
+		}
 	}
 
 	return buffer.Bytes()
-}
-
-/*
-SetMin sets minimum value.
-*/
-func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
-	p.hasMin = true
-	p.min = min
-	return p
-}
-
-/*
-SetMax sets maximum value.
-*/
-func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
-	p.hasMax = true
-	p.max = max
-	return p
-}
-
-/*
-SetWarn sets maximum value.
-*/
-func (p *PerformanceDataPoint) SetWarn(warn float64) *PerformanceDataPoint {
-	p.hasWarn = true
-	p.warn = warn
-	return p
-}
-
-/*
-SetCrit sets critical value.
-*/
-func (p *PerformanceDataPoint) SetCrit(crit float64) *PerformanceDataPoint {
-	p.hasCrit = true
-	p.crit = crit
-	return p
-}
-
-/*
-SetLabel adds a tag to the performance data point
-If one tag is added more than once, the value before will be overwritten
-*/
-func (p *PerformanceDataPoint) SetLabel(label string) *PerformanceDataPoint {
-	p.label = label
-	return p
-}
-
-/*
-PerformanceDataPointInfo has all information to one performance data point as exported variables. It is returned by
-PerformanceDataPoint.GetInfo()
-*/
-type PerformanceDataPointInfo struct {
-	Metric string `yaml:"metric" json:"metric" xml:"metric"`
-	Label  string `yaml:"label" json:"label" xml:"label"`
-
-	Value interface{} `yaml:"value" json:"value" xml:"value"`
-	Unit  string      `yaml:"unit" json:"unit" xml:"unit"`
-	Warn  interface{} `yaml:"warn" json:"warn" xml:"warn"`
-	Crit  interface{} `yaml:"crit" json:"crit" xml:"crit"`
-	Min   interface{} `yaml:"min" json:"min" xml:"min"`
-	Max   interface{} `yaml:"max" json:"max" xml:"max"`
-}
-
-/*
-GetInfo returns all information for a performance data point.
-*/
-func (p PerformanceDataPoint) GetInfo() PerformanceDataPointInfo {
-	return PerformanceDataPointInfo{
-		Metric: p.metric,
-		Label:  p.label,
-		Value:  p.value,
-		Unit:   p.unit,
-		Warn:   p.warn,
-		Crit:   p.crit,
-		Min:    p.min,
-		Max:    p.max,
-	}
-}
-
-/*
-GetInfo returns all information for performance data.
-*/
-func (p PerformanceData) GetInfo() []PerformanceDataPointInfo {
-	var info []PerformanceDataPointInfo
-	for _, pd := range p {
-		info = append(info, pd.GetInfo())
-	}
-	return info
 }
