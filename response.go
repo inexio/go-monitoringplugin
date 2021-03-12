@@ -1,4 +1,4 @@
-//Package monitoringplugin provides for writing monitoring check plugins for nagios, icinga2, zabbix, etc
+//Package monitoringplugin provides types for writing monitoring check plugins for nagios, icinga2, zabbix, etc
 package monitoringplugin
 
 import (
@@ -205,37 +205,6 @@ func (r *Response) SortOutputMessagesByStatus(b bool) {
 	r.sortOutputMessagesByStatus = b
 }
 
-// This function is used to map the status code to a string.
-func statusCode2Text(statusCode int) string {
-	switch {
-	case statusCode == 0:
-		return "OK"
-	case statusCode == 1:
-		return "WARNING"
-	case statusCode == 2:
-		return "CRITICAL"
-	default:
-		return "UNKNOWN"
-	}
-}
-
-/*
-String2StatusCode returns the status code for a string.
-OK -> 1, WARNING -> 2, CRITICAL -> 3, UNKNOWN and everything else -> 4 (case insensitive)
-*/
-func String2StatusCode(s string) int {
-	switch {
-	case strings.EqualFold("OK", s):
-		return 0
-	case strings.EqualFold("WARNING", s):
-		return 1
-	case strings.EqualFold("CRITICAL", s):
-		return 2
-	default:
-		return 3
-	}
-}
-
 // This function returns the output that will be returned by the check plugin as a string.
 func (r *Response) outputString() string {
 	return string(r.output())
@@ -334,4 +303,35 @@ func (r *Response) CheckThresholds(thresholds Thresholds, value interface{}, nam
 		r.UpdateStatus(res, name+" is outside of threshold")
 	}
 	return nil
+}
+
+/*
+String2StatusCode returns the status code for a string.
+OK -> 1, WARNING -> 2, CRITICAL -> 3, UNKNOWN and everything else -> 4 (case insensitive)
+*/
+func String2StatusCode(s string) int {
+	switch {
+	case strings.EqualFold("OK", s):
+		return OK
+	case strings.EqualFold("WARNING", s):
+		return WARNING
+	case strings.EqualFold("CRITICAL", s):
+		return CRITICAL
+	default:
+		return UNKNOWN
+	}
+}
+
+// This function is used to map the status code to a string.
+func statusCode2Text(statusCode int) string {
+	switch {
+	case statusCode == OK:
+		return "OK"
+	case statusCode == WARNING:
+		return "WARNING"
+	case statusCode == CRITICAL:
+		return "CRITICAL"
+	default:
+		return "UNKNOWN"
+	}
 }

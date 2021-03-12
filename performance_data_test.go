@@ -161,6 +161,26 @@ func TestPerformanceDataPoint_output(t *testing.T) {
 		t.Error("output string did not match regex")
 	}
 
+	p.SetThresholds(NewThresholds(0, nil, -10, nil))
+	regex = fmt.Sprintf("'%s'=%g%s;%d:;%d:;;%g", label, value, unit, 0, -10, max)
+	match, err = regexp.Match(regex, p.output(false))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output string did not match regex")
+	}
+
+	p.SetThresholds(NewThresholds(5, 10, 3, 11))
+	regex = fmt.Sprintf("'%s'=%g%s;%d:%d;%d:%d;;%g", label, value, unit, 5, 10, 3, 11, max)
+	match, err = regexp.Match(regex, p.output(false))
+	if err != nil {
+		t.Error(err.Error())
+	}
+	if !match {
+		t.Error("output string did not match regex")
+	}
+
 	p.SetThresholds(NewThresholds(0, warn, 0, crit))
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;;%g", label, value, unit, warn, crit, max)
 	match, err = regexp.Match(regex, p.output(false))

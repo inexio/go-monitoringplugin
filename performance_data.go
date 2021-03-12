@@ -66,10 +66,6 @@ This function is used to check if a PerformanceDataPoint is compatible with the 
 'http://nagios-plugins.org/doc/guidelines.html'(valid name and unit, value is inside the range of min and max etc.)
 */
 func (p *PerformanceDataPoint) Validate() error {
-	if err := p.Thresholds.Validate(); err != nil {
-		return errors.Wrap(err, "thresholds are invalid")
-	}
-
 	if p.Metric == "" {
 		return errors.New("data point metric cannot be an empty string")
 	}

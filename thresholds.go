@@ -171,7 +171,7 @@ func getRange(min, max interface{}) string {
 
 	if min != nil {
 		minString := fmt.Sprint(min)
-		if minString != "0" {
+		if minString != "0" || max == nil {
 			res += minString + ":"
 		}
 	} else {
