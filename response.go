@@ -293,7 +293,7 @@ func (r *Response) GetInfo() ResponseInfo {
 		Messages:        r.getOutputMessagesSortedByStatus()}
 }
 
-// Thresholds checks if the value exceeds the given thresholds and updates the response
+// CheckThresholds checks if the value exceeds the given thresholds and updates the response
 func (r *Response) CheckThresholds(thresholds Thresholds, value interface{}, name string) error {
 	res, err := thresholds.CheckValue(value)
 	if err != nil {

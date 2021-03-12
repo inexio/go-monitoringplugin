@@ -156,6 +156,7 @@ func NewPerformanceDataPoint(metric string, value interface{}) *PerformanceDataP
 	}
 }
 
+// SetUnit sets the unit of the performance data point
 func (p *PerformanceDataPoint) SetUnit(unit string) *PerformanceDataPoint {
 	p.Unit = unit
 	return p
