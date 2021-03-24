@@ -231,11 +231,21 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 		}
 		buffer.WriteByte(';')
 		if p.Min != nil {
-			buffer.WriteString(fmt.Sprintf("%g", p.Min))
+			switch min := p.Min.(type) {
+			case float64:
+				buffer.WriteString(strconv.FormatFloat(min, 'f', -1, 64))
+			default:
+				buffer.WriteString(fmt.Sprint(min))
+			}
 		}
 		buffer.WriteByte(';')
 		if p.Max != nil {
-			buffer.WriteString(fmt.Sprintf("%g", p.Max))
+			switch max := p.Max.(type) {
+			case float64:
+				buffer.WriteString(strconv.FormatFloat(max, 'f', -1, 64))
+			default:
+				buffer.WriteString(fmt.Sprint(max))
+			}
 		}
 	}
 

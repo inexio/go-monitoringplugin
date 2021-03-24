@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"math/big"
+	"strconv"
 )
 
 // Thresholds contains all threshold values
@@ -170,7 +171,13 @@ func getRange(min, max interface{}) string {
 	var res string
 
 	if min != nil {
-		minString := fmt.Sprint(min)
+		var minString string
+		switch m := min.(type) {
+		case float64:
+			minString = strconv.FormatFloat(m, 'f', -1, 64)
+		default:
+			minString = fmt.Sprint(m)
+		}
 		if minString != "0" || max == nil {
 			res += minString + ":"
 		}
@@ -179,7 +186,13 @@ func getRange(min, max interface{}) string {
 	}
 
 	if max != nil {
-		maxString := fmt.Sprint(max)
+		var maxString string
+		switch m := max.(type) {
+		case float64:
+			maxString = strconv.FormatFloat(m, 'f', -1, 64)
+		default:
+			maxString = fmt.Sprint(m)
+		}
 		res += maxString
 	}
 
