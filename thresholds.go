@@ -121,7 +121,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "critical min can't be parsed")
 		}
-		if cMin.Cmp(&value) != -1 {
+		if cMin.Cmp(&value) == 1 {
 			return CRITICAL, nil
 		}
 	}
@@ -130,7 +130,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "critical max can't be parsed")
 		}
-		if cMax.Cmp(&value) != 1 {
+		if cMax.Cmp(&value) == -1 {
 			return CRITICAL, nil
 		}
 	}
@@ -139,7 +139,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "warning min can't be parsed")
 		}
-		if wMin.Cmp(&value) != -1 {
+		if wMin.Cmp(&value) == 1 {
 			return WARNING, nil
 		}
 	}
@@ -148,7 +148,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 		if err != nil {
 			return 0, errors.Wrap(err, "warning max can't be parsed")
 		}
-		if wMax.Cmp(&value) != 1 {
+		if wMax.Cmp(&value) == -1 {
 			return WARNING, nil
 		}
 	}

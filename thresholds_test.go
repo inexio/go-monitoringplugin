@@ -67,11 +67,27 @@ func TestCheckThresholds(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, OK, res)
 
+	res, err = th1.CheckValue(5)
+	assert.NoError(t, err)
+	assert.Equal(t, OK, res)
+
+	res, err = th1.CheckValue(10)
+	assert.NoError(t, err)
+	assert.Equal(t, OK, res)
+
 	res, err = th1.CheckValue(4)
 	assert.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
 	res, err = th1.CheckValue(11)
+	assert.NoError(t, err)
+	assert.Equal(t, WARNING, res)
+
+	res, err = th1.CheckValue(3)
+	assert.NoError(t, err)
+	assert.Equal(t, WARNING, res)
+
+	res, err = th1.CheckValue(12)
 	assert.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
