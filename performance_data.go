@@ -34,7 +34,13 @@ func (p *performanceData) add(point *PerformanceDataPoint) error {
 	}
 	key := performanceDataPointKey{point.Metric, point.Label}
 	if _, ok := (*p)[key]; ok {
-		return errors.New("a performance data point with this metric does already exist")
+		return fmt.Errorf("a performance data point with the metric %s does already exist", func(key performanceDataPointKey) string {
+			res := key.metric
+			if key.label != "" {
+				res += " and label " + key.label
+			}
+			return res
+		}(key))
 	}
 	(*p)[key] = *point
 	return nil
