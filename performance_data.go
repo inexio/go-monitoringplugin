@@ -2,6 +2,7 @@ package monitoringplugin
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"math/big"
@@ -10,8 +11,8 @@ import (
 )
 
 type performanceDataPointKey struct {
-	metric string
-	label  string
+	Metric string `json:"metric"`
+	Label  string `json:"label,omitempty"`
 }
 
 // performanceData is a map where all performanceDataPoints are stored.
@@ -34,10 +35,10 @@ func (p *performanceData) add(point *PerformanceDataPoint) error {
 	}
 	key := performanceDataPointKey{point.Metric, point.Label}
 	if _, ok := (*p)[key]; ok {
-		return fmt.Errorf("a performance data point with the metric %s does already exist", func(key performanceDataPointKey) string {
-			res := key.metric
-			if key.label != "" {
-				res += " and label " + key.label
+		return fmt.Errorf("a performance data point with the metric '%s' does already exist", func(key performanceDataPointKey) string {
+			res := key.Metric
+			if key.Label != "" {
+				res += " and label " + key.Label
 			}
 			return res
 		}(key))
@@ -197,15 +198,14 @@ func (p *PerformanceDataPoint) SetThresholds(thresholds Thresholds) *Performance
 func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 	var buffer bytes.Buffer
 	if jsonLabel {
-		buffer.WriteString(`'{"metric":"`)
-		buffer.WriteString(p.Metric)
-		buffer.WriteByte('"')
-		if p.Label != "" {
-			buffer.WriteString(`,"label":"`)
-			buffer.WriteString(p.Label)
-			buffer.WriteByte('"')
+		buffer.WriteByte('\'')
+		key := performanceDataPointKey{
+			Metric: p.Metric,
+			Label:  p.Label,
 		}
-		buffer.WriteString("}'")
+		jsonKey, _ := json.Marshal(key)
+		buffer.Write(jsonKey)
+		buffer.WriteByte('\'')
 	} else {
 		buffer.WriteByte('\'')
 		buffer.WriteString(p.Metric)
