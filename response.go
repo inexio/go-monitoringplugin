@@ -131,14 +131,14 @@ func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 // Default is InvalidCharacterRemove.
 func (r *Response) SetInvalidCharacterBehavior(behavior int, replaceCharacter string) error {
 	switch behavior {
-	case InvalidCharacterRemove, InvalidCharacterRemoveMessage, InvalidCharacterReplaceWithError, InvalidCharacterReplaceWithErrorAndSetUNKNOWN:
-		r.invalidCharacterBehaviour = behavior
 	case InvalidCharacterReplace:
-		r.invalidCharacterBehaviour = behavior
 		if replaceCharacter == "" {
 			return errors.New("empty replace character set")
 		}
 		r.invalidCharacterReplaceChar = replaceCharacter
+		fallthrough
+	case InvalidCharacterRemove, InvalidCharacterRemoveMessage, InvalidCharacterReplaceWithError, InvalidCharacterReplaceWithErrorAndSetUNKNOWN:
+		r.invalidCharacterBehaviour = behavior
 	default:
 		return errors.New("unknown behavior")
 	}
