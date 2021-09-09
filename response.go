@@ -137,9 +137,8 @@ func (r *Response) SetInvalidCharacterBehavior(behavior int, replaceCharacter st
 		r.invalidCharacterBehaviour = behavior
 		if replaceCharacter == "" {
 			return errors.New("empty replace character set")
-		} else {
-			r.invalidCharacterReplaceChar = replaceCharacter
 		}
+		r.invalidCharacterReplaceChar = replaceCharacter
 	default:
 		return errors.New("unknown behavior")
 	}
