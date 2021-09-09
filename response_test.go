@@ -380,10 +380,94 @@ func TestResponse_SortOutputMessagesByStatus(t *testing.T) {
 	r.UpdateStatus(CRITICAL, "message6")
 	r.UpdateStatus(UNKNOWN, "message7")
 	r.UpdateStatus(OK, "message8")
-	messages := r.getOutputMessagesSortedByStatus()
-	for x, message := range messages {
-		for _, m := range messages[x:] {
+	r.validate()
+	for x, message := range r.outputMessages {
+		for _, m := range r.outputMessages[x:] {
 			assert.True(t, message.Status >= m.Status || message.Status == CRITICAL, "sorting did not work")
 		}
 	}
+}
+
+func TestResponse_InvalidCharacter(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(WARNING, "test|")
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "WARNING: test")
+}
+
+func TestResponse_InvalidCharacterReplace(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(OK, "test|2")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplace, "-")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "OK: checked\ntest-2")
+}
+
+func TestResponse_InvalidCharacterReplaceError(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(OK, "test|")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplace, "")
+	assert.Error(t, err)
+}
+
+func TestResponse_InvalidCharacterRemoveMessage(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(OK, "test|")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterRemoveMessage, "")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "OK: checked")
+}
+
+func TestResponse_InvalidCharacterReplaceWithError(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(WARNING, "test|")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithError, "")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
+}
+
+func TestResponse_InvalidCharacterReplaceWithErrorMultipleMessages(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(WARNING, "test|")
+	r.UpdateStatus(WARNING, "test|2")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithError, "")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
+}
+
+func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknown(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(WARNING, "test|")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithErrorAndSetUNKNOWN, "")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")
+}
+
+func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknownMultipleMessages(t *testing.T) {
+	r := NewResponse("checked")
+	r.UpdateStatus(WARNING, "test|")
+	r.UpdateStatus(WARNING, "test|2")
+	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithErrorAndSetUNKNOWN, "")
+	assert.NoError(t, err)
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")
+}
+
+func TestResponse_InvalidCharacterDefaultMessage(t *testing.T) {
+	r := NewResponse("test|")
+	r.validate()
+	res := r.GetInfo()
+	assert.True(t, res.RawOutput == "OK: test")
 }

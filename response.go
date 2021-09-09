@@ -21,23 +21,41 @@ const (
 	UNKNOWN = 3
 )
 
-// Response is the main type that is responsible for the check plugin Response.
-// It stores the current status code, output messages, performance data and the output message delimiter.
-type Response struct {
-	statusCode                 int
-	defaultOkMessage           string
-	outputMessages             []OutputMessage
-	performanceData            performanceData
-	outputDelimiter            string
-	performanceDataJSONLabel   bool
-	printPerformanceData       bool
-	sortOutputMessagesByStatus bool
-}
+const (
+	// InvalidCharacterRemove removes invalid character in output message.
+	InvalidCharacterRemove = iota + 1
+	// InvalidCharacterReplace replaces invalid character in output message with another character.
+	// Only valid if replace character is set
+	InvalidCharacterReplace
+	// InvalidCharacterRemoveMessage removes the message with the invalid character.
+	// StatusCode of the message will still be set.
+	InvalidCharacterRemoveMessage
+	// InvalidCharacterReplaceWithError replaces the whole message with an error message if an invalid character is found.
+	InvalidCharacterReplaceWithError
+	// InvalidCharacterReplaceWithErrorAndSetUNKNOWN replaces the whole message with an error message if an invalid character is found.
+	// Also sets the status code to UNKNOWN.
+	InvalidCharacterReplaceWithErrorAndSetUNKNOWN
+)
 
 // OutputMessage represents a message of the response. It contains a message and a status code.
 type OutputMessage struct {
 	Status  int    `yaml:"status" json:"status" xml:"status"`
 	Message string `yaml:"message" json:"message" xml:"message"`
+}
+
+// Response is the main type that is responsible for the check plugin Response.
+// It stores the current status code, output messages, performance data and the output message delimiter.
+type Response struct {
+	statusCode                  int
+	defaultOkMessage            string
+	outputMessages              []OutputMessage
+	performanceData             performanceData
+	outputDelimiter             string
+	performanceDataJSONLabel    bool
+	printPerformanceData        bool
+	sortOutputMessagesByStatus  bool
+	invalidCharacterBehaviour   int
+	invalidCharacterReplaceChar string
 }
 
 /*
@@ -47,10 +65,12 @@ if the status is still OK when the check exits.
 */
 func NewResponse(defaultOkMessage string) *Response {
 	response := &Response{
-		statusCode:           OK,
-		defaultOkMessage:     defaultOkMessage,
-		outputDelimiter:      "\n",
-		printPerformanceData: true,
+		statusCode:                 OK,
+		defaultOkMessage:           defaultOkMessage,
+		outputDelimiter:            "\n",
+		printPerformanceData:       true,
+		sortOutputMessagesByStatus: true,
+		invalidCharacterBehaviour:  InvalidCharacterRemove,
 	}
 	response.performanceData = make(performanceData)
 	return response
@@ -105,6 +125,25 @@ func (r *Response) GetStatusCode() int {
 // SetPerformanceDataJSONLabel updates the JSON metric.
 func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 	r.performanceDataJSONLabel = jsonLabel
+}
+
+// SetInvalidCharacterBehavior sets the desired behavior if an invalid character is found in a message.
+// Default is InvalidCharacterRemove.
+func (r *Response) SetInvalidCharacterBehavior(behavior int, replaceCharacter string) error {
+	switch behavior {
+	case InvalidCharacterRemove, InvalidCharacterRemoveMessage, InvalidCharacterReplaceWithError, InvalidCharacterReplaceWithErrorAndSetUNKNOWN:
+		r.invalidCharacterBehaviour = behavior
+	case InvalidCharacterReplace:
+		r.invalidCharacterBehaviour = behavior
+		if replaceCharacter == "" {
+			return errors.New("empty replace character set")
+		} else {
+			r.invalidCharacterReplaceChar = replaceCharacter
+		}
+	default:
+		return errors.New("unknown behavior")
+	}
+	return nil
 }
 
 /*
@@ -221,13 +260,8 @@ func (r *Response) output() []byte {
 			buffer.WriteString(r.outputDelimiter)
 		}
 	}
-	var messages []OutputMessage
-	if r.sortOutputMessagesByStatus {
-		messages = r.getOutputMessagesSortedByStatus()
-	} else {
-		messages = r.outputMessages
-	}
-	for c, x := range messages {
+
+	for c, x := range r.outputMessages {
 		if c != 0 {
 			buffer.WriteString(r.outputDelimiter)
 		}
@@ -249,17 +283,82 @@ func (r *Response) output() []byte {
 	return buffer.Bytes()
 }
 
-func (r *Response) getOutputMessagesSortedByStatus() []OutputMessage {
+func (r *Response) validate() {
+	if strings.Contains(r.defaultOkMessage, "|") {
+		switch r.invalidCharacterBehaviour {
+		case InvalidCharacterReplace:
+			r.defaultOkMessage = strings.ReplaceAll(r.defaultOkMessage, "|", r.invalidCharacterReplaceChar)
+		case InvalidCharacterRemoveMessage:
+			r.defaultOkMessage = ""
+		case InvalidCharacterReplaceWithError:
+			r.defaultOkMessage = "default output message contains invalid character"
+		case InvalidCharacterReplaceWithErrorAndSetUNKNOWN:
+			r.statusCode = UNKNOWN
+			r.outputMessages = []OutputMessage{{
+				Status:  UNKNOWN,
+				Message: "default output message contains invalid character",
+			}}
+			r.outputMessages = nil
+			return
+		default: // InvalidCharacterRemove
+			r.defaultOkMessage = strings.ReplaceAll(r.defaultOkMessage, "|", "")
+		}
+	}
+	r.validateMessages()
+	if r.sortOutputMessagesByStatus {
+		r.sortMessagesByStatus()
+	}
+}
+
+func (r *Response) validateMessages() {
 	var messages []OutputMessage
-	// generate copy of messages
-	messages = append(messages, r.outputMessages...)
-	sort.Slice(messages, func(i, j int) bool {
-		if messages[i].Status == CRITICAL {
+out:
+	for _, message := range r.outputMessages {
+		if !strings.Contains(message.Message, "|") {
+			messages = append(messages, message)
+		} else {
+			switch r.invalidCharacterBehaviour {
+			case InvalidCharacterReplace:
+				newMessage := strings.ReplaceAll(message.Message, "|", r.invalidCharacterReplaceChar)
+				if newMessage != "" {
+					messages = append(messages, OutputMessage{
+						Status:  message.Status,
+						Message: newMessage,
+					})
+				}
+			case InvalidCharacterRemoveMessage:
+				// done
+			case InvalidCharacterReplaceWithErrorAndSetUNKNOWN:
+				r.statusCode = UNKNOWN
+				message.Status = UNKNOWN
+				fallthrough
+			case InvalidCharacterReplaceWithError:
+				messages = []OutputMessage{{
+					Status:  message.Status,
+					Message: "output message contains invalid character",
+				}}
+				break out
+			default: // InvalidCharacterRemove
+				newMessage := strings.ReplaceAll(message.Message, "|", "")
+				if newMessage != "" {
+					messages = append(messages, OutputMessage{
+						Status:  message.Status,
+						Message: newMessage,
+					})
+				}
+			}
+		}
+	}
+	r.outputMessages = messages
+}
+
+func (r *Response) sortMessagesByStatus() {
+	sort.Slice(r.outputMessages, func(i, j int) bool {
+		if r.outputMessages[i].Status == CRITICAL {
 			return true
 		}
-		return messages[i].Status > messages[j].Status
+		return r.outputMessages[i].Status > r.outputMessages[j].Status
 	})
-	return messages
 }
 
 /*
@@ -272,7 +371,8 @@ Example:
 	//check plugin logic...
 */
 func (r *Response) OutputAndExit() {
-	fmt.Printf("%s\n", r.output())
+	r.validate()
+	fmt.Println(r.outputString())
 	os.Exit(r.statusCode)
 }
 
@@ -286,11 +386,13 @@ type ResponseInfo struct {
 
 // GetInfo returns all information for a response.
 func (r *Response) GetInfo() ResponseInfo {
+	r.validate()
 	return ResponseInfo{
-		RawOutput:       string(r.output()),
+		RawOutput:       r.outputString(),
 		StatusCode:      r.statusCode,
 		PerformanceData: r.performanceData.getInfo(),
-		Messages:        r.getOutputMessagesSortedByStatus()}
+		Messages:        r.outputMessages,
+	}
 }
 
 // CheckThresholds checks if the value exceeds the given thresholds and updates the response
