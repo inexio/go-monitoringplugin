@@ -315,7 +315,7 @@ func TestOutputPerformanceDataThresholdsExceeded(t *testing.T) {
 	}
 
 	output := outputB.String()
-	if !strings.HasPrefix(output, "WARNING: label3 is outside of threshold | ") {
+	if !strings.HasPrefix(output, "WARNING: label3 is outside of WARNING threshold | ") {
 		t.Error("output did not match the expected regex")
 	}
 }

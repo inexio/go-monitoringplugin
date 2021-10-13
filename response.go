@@ -21,10 +21,12 @@ const (
 	UNKNOWN = 3
 )
 
+type InvalidCharacterBehavior int
+
 const (
-	// InvalidCharacterRemove removes invalid character in output message.
-	InvalidCharacterRemove = iota + 1
-	// InvalidCharacterReplace replaces invalid character in output message with another character.
+	// InvalidCharacterRemove removes invalid character in the output message.
+	InvalidCharacterRemove InvalidCharacterBehavior = iota + 1
+	// InvalidCharacterReplace replaces invalid character in the output message with another character.
 	// Only valid if replace character is set
 	InvalidCharacterReplace
 	// InvalidCharacterRemoveMessage removes the message with the invalid character.
@@ -54,7 +56,7 @@ type Response struct {
 	performanceDataJSONLabel    bool
 	printPerformanceData        bool
 	sortOutputMessagesByStatus  bool
-	invalidCharacterBehaviour   int
+	invalidCharacterBehaviour   InvalidCharacterBehavior
 	invalidCharacterReplaceChar string
 }
 
@@ -129,7 +131,8 @@ func (r *Response) SetPerformanceDataJSONLabel(jsonLabel bool) {
 
 // SetInvalidCharacterBehavior sets the desired behavior if an invalid character is found in a message.
 // Default is InvalidCharacterRemove.
-func (r *Response) SetInvalidCharacterBehavior(behavior int, replaceCharacter string) error {
+// replaceCharacter is only necessary if InvalidCharacterReplace is set.
+func (r *Response) SetInvalidCharacterBehavior(behavior InvalidCharacterBehavior, replaceCharacter string) error {
 	switch behavior {
 	case InvalidCharacterReplace:
 		if replaceCharacter == "" {
@@ -251,7 +254,7 @@ func (r *Response) outputString() string {
 // This function returns the output that will be returned by the check plugin.
 func (r *Response) output() []byte {
 	var buffer bytes.Buffer
-	buffer.WriteString(statusCode2Text(r.statusCode))
+	buffer.WriteString(StatusCode2Text(r.statusCode))
 	buffer.WriteString(": ")
 	if r.statusCode == OK {
 		buffer.WriteString(r.defaultOkMessage)
@@ -401,7 +404,7 @@ func (r *Response) CheckThresholds(thresholds Thresholds, value interface{}, nam
 		return errors.Wrap(err, "failed to check value against threshold")
 	}
 	if res != OK {
-		r.UpdateStatus(res, name+" is outside of threshold")
+		r.UpdateStatus(res, name+" is outside of "+StatusCode2Text(res)+" threshold")
 	}
 	return nil
 }
@@ -423,8 +426,8 @@ func String2StatusCode(s string) int {
 	}
 }
 
-// This function is used to map the status code to a string.
-func statusCode2Text(statusCode int) string {
+// StatusCode2Text is used to map the status code to a string.
+func StatusCode2Text(statusCode int) string {
 	switch {
 	case statusCode == OK:
 		return "OK"
