@@ -21,6 +21,8 @@ const (
 	UNKNOWN = 3
 )
 
+// InvalidCharacterBehavior specifies how the monitoringplugin should behave if an invalid character is found in the
+// output message. Does not affect invalid characters in the performance data.
 type InvalidCharacterBehavior int
 
 const (
