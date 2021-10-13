@@ -77,7 +77,7 @@ func (p *PerformanceDataPoint) Validate() error {
 		return errors.New("data point metric cannot be an empty string")
 	}
 
-	match, err := regexp.MatchString("([='|;])", p.Metric)
+	match, err := regexp.MatchString("([='])", p.Metric)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
@@ -85,7 +85,7 @@ func (p *PerformanceDataPoint) Validate() error {
 		return errors.New("metric contains invalid character")
 	}
 
-	match, err = regexp.MatchString("([='|;])", p.Label)
+	match, err = regexp.MatchString("([='])", p.Label)
 	if err != nil {
 		return errors.Wrap(err, "error during regex match")
 	}
