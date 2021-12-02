@@ -170,13 +170,13 @@ func (p *PerformanceDataPoint) SetUnit(unit string) *PerformanceDataPoint {
 }
 
 // SetMin sets minimum value.
-func (p *PerformanceDataPoint) SetMin(min float64) *PerformanceDataPoint {
+func (p *PerformanceDataPoint) SetMin(min interface{}) *PerformanceDataPoint {
 	p.Min = min
 	return p
 }
 
 // SetMax sets maximum value.
-func (p *PerformanceDataPoint) SetMax(max float64) *PerformanceDataPoint {
+func (p *PerformanceDataPoint) SetMax(max interface{}) *PerformanceDataPoint {
 	p.Max = max
 	return p
 }
