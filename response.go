@@ -1,10 +1,10 @@
-//Package monitoringplugin provides types for writing monitoring check plugins for nagios, icinga2, zabbix, etc
+// Package monitoringplugin provides types for writing monitoring check plugins for nagios, icinga2, zabbix, etc
 package monitoringplugin
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"sort"
 	"strings"
@@ -84,6 +84,7 @@ func NewResponse(defaultOkMessage string) *Response {
 AddPerformanceDataPoint adds a PerformanceDataPoint to the performanceData map,
 using performanceData.add(*PerformanceDataPoint).
 Usage:
+
 	err := Response.AddPerformanceDataPoint(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
@@ -92,7 +93,7 @@ Usage:
 func (r *Response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
 	err := r.performanceData.add(point)
 	if err != nil {
-		return errors.Wrap(err, "failed to add performance data point")
+		return fmt.Errorf("failed to add performance data point: %w", err)
 	}
 
 	if !point.Thresholds.IsEmpty() {
@@ -102,7 +103,7 @@ func (r *Response) AddPerformanceDataPoint(point *PerformanceDataPoint) error {
 		}
 		err = r.CheckThresholds(point.Thresholds, point.Value, name)
 		if err != nil {
-			return errors.Wrap(err, "failed to check thresholds")
+			return fmt.Errorf("failed to check thresholds: %w", err)
 		}
 	}
 
@@ -163,16 +164,16 @@ CRITICAL > UNKNOWN > WARNING > OK
 Everything "left" from the current status code is seen as worse than the current one.
 If the function wants to set a status code, it will only update it if the new status code is "left" of the current one.
 Example:
+
 	//current status code = 1
 	Response.updateStatusCode(0) //nothing changes
 	Response.updateStatusCode(2) //status code changes to CRITICAL (=2)
 
 	//now current status code = 2
 	Response.updateStatusCode(3) //nothing changes, because CRITICAL is worse than UNKNOWN
-
 */
 func (r *Response) updateStatusCode(statusCode int) {
-	if r.statusCode == CRITICAL { //critical is the worst status code; if its critical, do not change anything
+	if r.statusCode == CRITICAL { // critical is the worst status code; if its critical, do not change anything
 		return
 	}
 	if statusCode == CRITICAL {
@@ -225,6 +226,7 @@ SetOutputDelimiter is used to set the delimiter that is used to separate the out
 the check plugin exits. The default value is a linebreak (\n)
 It can be set to any string.
 Example:
+
 	Response.SetOutputDelimiter(" / ")
 	//this results in the output having the following format:
 	//OK: defaultOkMessage / outputMessage1 / outputMessage2 / outputMessage3 | performanceData
@@ -369,6 +371,7 @@ func (r *Response) sortMessagesByStatus() {
 OutputAndExit generates the output string and prints it to stdout.
 After that the check plugin exits with the current exit code.
 Example:
+
 	Response := NewResponse("everything checked!")
 	defer Response.OutputAndExit()
 
@@ -403,7 +406,7 @@ func (r *Response) GetInfo() ResponseInfo {
 func (r *Response) CheckThresholds(thresholds Thresholds, value interface{}, name string) error {
 	res, err := thresholds.CheckValue(value)
 	if err != nil {
-		return errors.Wrap(err, "failed to check value against threshold")
+		return fmt.Errorf("failed to check value against threshold: %w", err)
 	}
 	if res != OK {
 		r.UpdateStatus(res, name+" is outside of "+StatusCode2Text(res)+" threshold")

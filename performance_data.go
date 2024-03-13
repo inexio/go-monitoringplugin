@@ -3,8 +3,8 @@ package monitoringplugin
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"math/big"
 	"regexp"
 	"strconv"
@@ -24,6 +24,7 @@ add adds a PerformanceDataPoint to the performanceData Map.
 The function checks if a PerformanceDataPoint is valid and if there is already another PerformanceDataPoint with the
 same metric in the performanceData map.
 Usage:
+
 	err := performanceData.add(NewPerformanceDataPoint("temperature", 32, "°C").SetWarn(35).SetCrit(40))
 	if err != nil {
 		...
@@ -31,7 +32,7 @@ Usage:
 */
 func (p *performanceData) add(point *PerformanceDataPoint) error {
 	if err := point.Validate(); err != nil {
-		return errors.Wrap(err, "given performance data point is not valid")
+		return fmt.Errorf("given performance data point is not valid: %w", err)
 	}
 	key := performanceDataPointKey{point.Metric, point.Label}
 	if _, ok := (*p)[key]; ok {
@@ -79,7 +80,7 @@ func (p *PerformanceDataPoint) Validate() error {
 
 	match, err := regexp.MatchString("([='])", p.Metric)
 	if err != nil {
-		return errors.Wrap(err, "error during regex match")
+		return fmt.Errorf("error during regex match: %w", err)
 	}
 	if match {
 		return errors.New("metric contains invalid character")
@@ -87,7 +88,7 @@ func (p *PerformanceDataPoint) Validate() error {
 
 	match, err = regexp.MatchString("([='])", p.Label)
 	if err != nil {
-		return errors.Wrap(err, "error during regex match")
+		return fmt.Errorf("error during regex match: %w", err)
 	}
 	if match {
 		return errors.New("metric contains invalid character")
@@ -95,7 +96,7 @@ func (p *PerformanceDataPoint) Validate() error {
 
 	match, err = regexp.MatchString("([0-9;'\"])", p.Unit)
 	if err != nil {
-		return errors.Wrap(err, "error during regex match")
+		return fmt.Errorf("error during regex match: %w", err)
 	}
 	if match {
 		return errors.New("unit can not contain numbers, semicolon or quotes")
@@ -104,13 +105,13 @@ func (p *PerformanceDataPoint) Validate() error {
 	var min, max, value big.Float
 	_, _, err = value.Parse(fmt.Sprint(p.Value), 10)
 	if err != nil {
-		return errors.Wrap(err, "can't parse value")
+		return fmt.Errorf("can't parse value: %w", err)
 	}
 
 	if p.Min != nil {
 		_, _, err = min.Parse(fmt.Sprint(p.Min), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse min")
+			return fmt.Errorf("can't parse min: %w", err)
 		}
 		switch min.Cmp(&value) {
 		case 1:
@@ -121,7 +122,7 @@ func (p *PerformanceDataPoint) Validate() error {
 	if p.Max != nil {
 		_, _, err = max.Parse(fmt.Sprint(p.Max), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse max")
+			return fmt.Errorf("can't parse max: %w", err)
 		}
 		switch max.Cmp(&value) {
 		case -1:
@@ -140,7 +141,7 @@ func (p *PerformanceDataPoint) Validate() error {
 	if !p.Thresholds.IsEmpty() {
 		err = p.Thresholds.Validate()
 		if err != nil {
-			return errors.Wrap(err, "thresholds are invalid")
+			return fmt.Errorf("thresholds are invalid: %w", err)
 		}
 	}
 
@@ -154,6 +155,7 @@ function performanceData.add(*PerformanceDataPoint).
 It is possible to directly add thresholds, min and max values with the functions SetThresholds(Thresholds),
 SetMin(int) and SetMax(int).
 Usage:
+
 	PerformanceDataPoint := NewPerformanceDataPoint("memory_usage", 55).SetUnit("%")
 */
 func NewPerformanceDataPoint(metric string, value interface{}) *PerformanceDataPoint {

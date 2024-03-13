@@ -1,8 +1,9 @@
 package monitoringplugin
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateThresholds(t *testing.T) {

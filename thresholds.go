@@ -1,8 +1,8 @@
 package monitoringplugin
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	"math/big"
 	"strconv"
 )
@@ -31,11 +31,11 @@ func (c *Thresholds) Validate() error {
 		var min, max big.Float
 		_, _, err := min.Parse(fmt.Sprint(c.WarningMin), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse warning min")
+			return fmt.Errorf("can't parse warning min: %w", err)
 		}
 		_, _, err = max.Parse(fmt.Sprint(c.WarningMax), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse warning max")
+			return fmt.Errorf("can't parse warning max: %w", err)
 		}
 
 		if res := min.Cmp(&max); res == 1 {
@@ -47,11 +47,11 @@ func (c *Thresholds) Validate() error {
 		var min, max big.Float
 		_, _, err := min.Parse(fmt.Sprint(c.CriticalMin), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse critical min")
+			return fmt.Errorf("can't parse critical min: %w", err)
 		}
 		_, _, err = max.Parse(fmt.Sprint(c.CriticalMax), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse critical max")
+			return fmt.Errorf("can't parse critical max: %w", err)
 		}
 
 		if res := min.Cmp(&max); res == 1 {
@@ -63,11 +63,11 @@ func (c *Thresholds) Validate() error {
 		var wMin, cMin big.Float
 		_, _, err := wMin.Parse(fmt.Sprint(c.WarningMin), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse warning min")
+			return fmt.Errorf("can't parse warning min: %w", err)
 		}
 		_, _, err = cMin.Parse(fmt.Sprint(c.CriticalMin), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse critical min")
+			return fmt.Errorf("can't parse critical min: %w", err)
 		}
 
 		if res := cMin.Cmp(&wMin); res == 1 {
@@ -79,11 +79,11 @@ func (c *Thresholds) Validate() error {
 		var wMax, cMax big.Float
 		_, _, err := wMax.Parse(fmt.Sprint(c.WarningMax), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse warning min")
+			return fmt.Errorf("can't parse warning min: %w", err)
 		}
 		_, _, err = cMax.Parse(fmt.Sprint(c.CriticalMax), 10)
 		if err != nil {
-			return errors.Wrap(err, "can't parse critical min")
+			return fmt.Errorf("can't parse critical min: %w", err)
 		}
 
 		if res := cMax.Cmp(&wMax); res == -1 {
@@ -114,12 +114,12 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 	var value, wMin, wMax, cMin, cMax big.Float
 	_, _, err := value.Parse(fmt.Sprint(v), 10)
 	if err != nil {
-		return 0, errors.Wrap(err, "value can't be parsed")
+		return 0, fmt.Errorf("value can't be parsed: %w", err)
 	}
 	if c.CriticalMin != nil {
 		_, _, err := cMin.Parse(fmt.Sprint(c.CriticalMin), 10)
 		if err != nil {
-			return 0, errors.Wrap(err, "critical min can't be parsed")
+			return 0, fmt.Errorf("critical min can't be parsed: %w", err)
 		}
 		if cMin.Cmp(&value) == 1 {
 			return CRITICAL, nil
@@ -128,7 +128,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 	if c.CriticalMax != nil {
 		_, _, err := cMax.Parse(fmt.Sprint(c.CriticalMax), 10)
 		if err != nil {
-			return 0, errors.Wrap(err, "critical max can't be parsed")
+			return 0, fmt.Errorf("critical max can't be parsed: %w", err)
 		}
 		if cMax.Cmp(&value) == -1 {
 			return CRITICAL, nil
@@ -137,7 +137,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 	if c.WarningMin != nil {
 		_, _, err := wMin.Parse(fmt.Sprint(c.WarningMin), 10)
 		if err != nil {
-			return 0, errors.Wrap(err, "warning min can't be parsed")
+			return 0, fmt.Errorf("warning min can't be parsed: %w", err)
 		}
 		if wMin.Cmp(&value) == 1 {
 			return WARNING, nil
@@ -146,7 +146,7 @@ func (c *Thresholds) CheckValue(v interface{}) (int, error) {
 	if c.WarningMax != nil {
 		_, _, err := wMax.Parse(fmt.Sprint(c.WarningMax), 10)
 		if err != nil {
-			return 0, errors.Wrap(err, "warning max can't be parsed")
+			return 0, fmt.Errorf("warning max can't be parsed: %w", err)
 		}
 		if wMax.Cmp(&value) == -1 {
 			return WARNING, nil

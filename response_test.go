@@ -2,13 +2,14 @@ package monitoringplugin
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOKResponse(t *testing.T) {
@@ -22,7 +23,6 @@ func TestOKResponse(t *testing.T) {
 	var outputB bytes.Buffer
 	cmd.Stdout = &outputB
 	err := cmd.Run()
-
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			t.Error("OkResponse is expected to return exit status 0, but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
@@ -138,7 +138,6 @@ func TestOutputMessages(t *testing.T) {
 	var outputB bytes.Buffer
 	cmd.Stdout = &outputB
 	err := cmd.Run()
-
 	if err != nil {
 		t.Error("an error occurred during cmd.Run(), but the Response was expected to exit with exit code 0")
 		return
