@@ -11,9 +11,7 @@ The package complies with the [Monitoring Plugins Development Guidelines](https:
 ## Example / Usage
 	package main
 
-	import (
-		monitoringplugin "github.com/inexio/go-monitoringplugin"
-	)
+	import "github.com/inexio/go-monitoringplugin/v2"
 
 	func main() {
 		//Creating response with a default ok message that will be displayed when the checks exits with status ok

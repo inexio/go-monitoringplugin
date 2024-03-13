@@ -8,107 +8,46 @@ import (
 )
 
 func TestValidateThresholds(t *testing.T) {
-	th1 := Thresholds{
-		WarningMin:  5,
-		WarningMax:  10,
-		CriticalMin: 3,
-		CriticalMax: 12,
-	}
-	assert.NoError(t, th1.Validate())
+	th1 := NewThresholds(5, 10, 3, 12)
+	require.NoError(t, th1.Validate())
 
-	th2 := Thresholds{
-		WarningMin:  0,
-		WarningMax:  10,
-		CriticalMin: 0,
-		CriticalMax: 12,
-	}
-	assert.NoError(t, th2.Validate())
+	th2 := NewThresholds(0, 10, 0, 12)
+	require.NoError(t, th2.Validate())
 
-	th3 := Thresholds{}
-	assert.NoError(t, th3.Validate())
+	th3 := Thresholds[int]{}
+	require.NoError(t, th3.Validate())
 
-	th4 := Thresholds{
-		WarningMax: 3,
-	}
-	assert.NoError(t, th4.Validate())
+	th4 := NewThresholds(0, 3, 0, 0)
+	require.NoError(t,
+		th4.UseWarning(false, true).UseCritical(false, false).Validate())
 
-	th5 := Thresholds{
-		WarningMin: 2,
-		WarningMax: 1,
-	}
-	require.Error(t, th5.Validate())
+	th5 := NewThresholds(2, 1, 0, 0)
+	require.Error(t, th5.UseCritical(false, false).Validate())
 
-	th6 := Thresholds{
-		CriticalMin: 2,
-		CriticalMax: 1,
-	}
-	require.Error(t, th6.Validate())
+	th6 := NewThresholds(0, 0, 2, 1)
+	require.Error(t, th6.UseWarning(false, false).Validate())
 
-	th7 := Thresholds{
-		WarningMin:  1,
-		CriticalMin: 2,
-	}
-	require.Error(t, th7.Validate())
+	th7 := NewThresholds(1, 0, 2, 0)
+	require.Error(t,
+		th7.UseWarning(true, false).UseCritical(true, false).Validate())
 
-	th8 := Thresholds{
-		WarningMax:  2,
-		CriticalMax: 1,
-	}
-	assert.Error(t, th8.Validate())
+	th8 := NewThresholds(0, 2, 0, 1)
+	require.Error(t,
+		th8.UseWarning(false, true).UseCritical(false, true).Validate())
 }
 
 func TestCheckThresholds(t *testing.T) {
-	th1 := Thresholds{
-		WarningMin:  5,
-		WarningMax:  10,
-		CriticalMin: 3,
-		CriticalMax: 12,
-	}
+	th1 := NewThresholds(5, 10, 3, 12)
+	assert.Equal(t, OK, th1.CheckValue(6))
+	assert.Equal(t, OK, th1.CheckValue(5))
+	assert.Equal(t, OK, th1.CheckValue(10))
+	assert.Equal(t, WARNING, th1.CheckValue(4))
+	assert.Equal(t, WARNING, th1.CheckValue(11))
+	assert.Equal(t, WARNING, th1.CheckValue(3))
+	assert.Equal(t, WARNING, th1.CheckValue(12))
+	assert.Equal(t, CRITICAL, th1.CheckValue(2))
+	assert.Equal(t, CRITICAL, th1.CheckValue(13))
 
-	res, err := th1.CheckValue(6)
-	require.NoError(t, err)
-	assert.Equal(t, OK, res)
-
-	res, err = th1.CheckValue(5)
-	require.NoError(t, err)
-	assert.Equal(t, OK, res)
-
-	res, err = th1.CheckValue(10)
-	require.NoError(t, err)
-	assert.Equal(t, OK, res)
-
-	res, err = th1.CheckValue(4)
-	require.NoError(t, err)
-	assert.Equal(t, WARNING, res)
-
-	res, err = th1.CheckValue(11)
-	require.NoError(t, err)
-	assert.Equal(t, WARNING, res)
-
-	res, err = th1.CheckValue(3)
-	require.NoError(t, err)
-	assert.Equal(t, WARNING, res)
-
-	res, err = th1.CheckValue(12)
-	require.NoError(t, err)
-	assert.Equal(t, WARNING, res)
-
-	res, err = th1.CheckValue(2)
-	require.NoError(t, err)
-	assert.Equal(t, CRITICAL, res)
-
-	res, err = th1.CheckValue(13)
-	require.NoError(t, err)
-	assert.Equal(t, CRITICAL, res)
-
-	th2 := Thresholds{
-		WarningMin:  5,
-		WarningMax:  10,
-		CriticalMin: 5,
-		CriticalMax: 12,
-	}
-
-	res, err = th2.CheckValue(4)
-	require.NoError(t, err)
-	assert.Equal(t, CRITICAL, res)
+	th2 := NewThresholds(5, 10, 5, 12)
+	assert.Equal(t, CRITICAL, th2.CheckValue(4))
 }
