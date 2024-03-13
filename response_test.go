@@ -181,32 +181,32 @@ func TestOutputMessages(t *testing.T) {
 func TestResponse_UpdateStatusIf(t *testing.T) {
 	r := NewResponse("")
 	r.UpdateStatusIf(false, 1, "")
-	assert.True(t, r.statusCode == 0)
+	assert.Equal(t, 0, r.statusCode)
 	r.UpdateStatusIf(true, 1, "")
-	assert.True(t, r.statusCode == 1)
+	assert.Equal(t, 1, r.statusCode)
 }
 
 func TestResponse_UpdateStatusIfNot(t *testing.T) {
 	r := NewResponse("")
 	r.UpdateStatusIfNot(true, 1, "")
-	assert.True(t, r.statusCode == 0)
+	assert.Equal(t, 0, r.statusCode)
 	r.UpdateStatusIfNot(false, 1, "")
-	assert.True(t, r.statusCode == 1)
+	assert.Equal(t, 1, r.statusCode)
 }
 
 func TestString2StatusCode(t *testing.T) {
-	assert.True(t, String2StatusCode("ok") == 0)
-	assert.True(t, String2StatusCode("OK") == 0)
-	assert.True(t, String2StatusCode("Ok") == 0)
-	assert.True(t, String2StatusCode("warning") == 1)
-	assert.True(t, String2StatusCode("WARNING") == 1)
-	assert.True(t, String2StatusCode("Warning") == 1)
-	assert.True(t, String2StatusCode("critical") == 2)
-	assert.True(t, String2StatusCode("CRITICAL") == 2)
-	assert.True(t, String2StatusCode("Critical") == 2)
-	assert.True(t, String2StatusCode("unknown") == 3)
-	assert.True(t, String2StatusCode("UNKNOWN") == 3)
-	assert.True(t, String2StatusCode("Unknown") == 3)
+	assert.Equal(t, 0, String2StatusCode("ok"))
+	assert.Equal(t, 0, String2StatusCode("OK"))
+	assert.Equal(t, 0, String2StatusCode("Ok"))
+	assert.Equal(t, 1, String2StatusCode("warning"))
+	assert.Equal(t, 1, String2StatusCode("WARNING"))
+	assert.Equal(t, 1, String2StatusCode("Warning"))
+	assert.Equal(t, 2, String2StatusCode("critical"))
+	assert.Equal(t, 2, String2StatusCode("CRITICAL"))
+	assert.Equal(t, 2, String2StatusCode("Critical"))
+	assert.Equal(t, 3, String2StatusCode("unknown"))
+	assert.Equal(t, 3, String2StatusCode("UNKNOWN"))
+	assert.Equal(t, 3, String2StatusCode("Unknown"))
 }
 
 func TestOutputPerformanceData(t *testing.T) {
@@ -387,7 +387,7 @@ func TestResponse_InvalidCharacter(t *testing.T) {
 	r.UpdateStatus(WARNING, "test|")
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "WARNING: test")
+	assert.Equal(t, "WARNING: test", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplace(t *testing.T) {
@@ -397,7 +397,7 @@ func TestResponse_InvalidCharacterReplace(t *testing.T) {
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "OK: checked\ntest-2")
+	assert.Equal(t, "OK: checked\ntest-2", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplaceError(t *testing.T) {
@@ -414,7 +414,7 @@ func TestResponse_InvalidCharacterRemoveMessage(t *testing.T) {
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "OK: checked")
+	assert.Equal(t, "OK: checked", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplaceWithError(t *testing.T) {
@@ -424,7 +424,7 @@ func TestResponse_InvalidCharacterReplaceWithError(t *testing.T) {
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
+	assert.Equal(t, "WARNING: output message contains invalid character", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplaceWithErrorMultipleMessages(t *testing.T) {
@@ -435,7 +435,7 @@ func TestResponse_InvalidCharacterReplaceWithErrorMultipleMessages(t *testing.T)
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
+	assert.Equal(t, "WARNING: output message contains invalid character", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknown(t *testing.T) {
@@ -445,7 +445,7 @@ func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknown(t *testing.T) {
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")
+	assert.Equal(t, "UNKNOWN: output message contains invalid character", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknownMultipleMessages(t *testing.T) {
@@ -456,12 +456,12 @@ func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknownMultipleMessages(
 	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")
+	assert.Equal(t, "UNKNOWN: output message contains invalid character", res.RawOutput)
 }
 
 func TestResponse_InvalidCharacterDefaultMessage(t *testing.T) {
 	r := NewResponse("test|")
 	r.validate()
 	res := r.GetInfo()
-	assert.True(t, res.RawOutput == "OK: test")
+	assert.Equal(t, "OK: test", res.RawOutput)
 }
