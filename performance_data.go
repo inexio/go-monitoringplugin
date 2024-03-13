@@ -50,7 +50,7 @@ func (p *performanceData) add(point *PerformanceDataPoint) error {
 
 // getInfo returns all information for performance data.
 func (p performanceData) getInfo() []PerformanceDataPoint {
-	var info []PerformanceDataPoint
+	info := make([]PerformanceDataPoint, 0, len(p))
 	for _, pd := range p {
 		info = append(info, pd)
 	}
