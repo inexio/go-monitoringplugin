@@ -40,23 +40,18 @@ func TestOKResponse(t *testing.T) {
 	if !match {
 		t.Error("ok result output message did not match to the expected regex")
 	}
-
-	return
 }
 
 func TestWARNINGResponse(t *testing.T) {
 	failureResponse(t, 1)
-	return
 }
 
 func TestCRITICALResponse(t *testing.T) {
 	failureResponse(t, 2)
-	return
 }
 
 func TestUNKNOWNResponse(t *testing.T) {
 	failureResponse(t, 3)
-	return
 }
 
 func TestStatusHierarchy(t *testing.T) {
@@ -366,7 +361,6 @@ func failureResponse(t *testing.T, exitCode int) {
 	if !match {
 		t.Error(status + " result output message did not match to the expected regex")
 	}
-	return
 }
 
 func TestResponse_SortOutputMessagesByStatus(t *testing.T) {

@@ -49,7 +49,6 @@ func TestPerformanceDataPointCreation(t *testing.T) {
 	if p.Thresholds != thresholds {
 		t.Error("SetThresholds failed")
 	}
-	return
 }
 
 func TestPerformanceDataPoint_validate(t *testing.T) {
@@ -58,13 +57,13 @@ func TestPerformanceDataPoint_validate(t *testing.T) {
 		t.Error("valid performance data point resulted in an error: " + err.Error())
 	}
 
-	//empty metric
+	// empty metric
 	p = NewPerformanceDataPoint("", 10)
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: empty metric)")
 	}
 
-	//invalid metric
+	// invalid metric
 	p = NewPerformanceDataPoint("metric=", 10)
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: invalid metric, contains =)")
@@ -75,7 +74,7 @@ func TestPerformanceDataPoint_validate(t *testing.T) {
 		t.Error("invalid performance data did not return an error (case: invalid metric, contains single quotes)")
 	}
 
-	//invalid unit
+	// invalid unit
 	p = NewPerformanceDataPoint("metric", 10).SetUnit("unit1")
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: invalid unit, contains numbers)")
@@ -93,19 +92,19 @@ func TestPerformanceDataPoint_validate(t *testing.T) {
 		t.Error("invalid performance data did not return an error (case: invalid unit, contains double quotes)")
 	}
 
-	//value < min
+	// value < min
 	p = NewPerformanceDataPoint("metric", 10).SetMin(50)
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: value < min)")
 	}
 
-	//value > max
+	// value > max
 	p = NewPerformanceDataPoint("metric", 10).SetMax(5)
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: value < min)")
 	}
 
-	//min > max
+	// min > max
 	p = NewPerformanceDataPoint("metric", 10).SetMin(10).SetMax(5)
 	if err := p.Validate(); err == nil {
 		t.Error("invalid performance data did not return an error (case: max < min)")
@@ -229,13 +228,12 @@ func TestPerformanceDataPoint_output(t *testing.T) {
 	if !match {
 		t.Error("output string did not match regex")
 	}
-
 }
 
 func TestPerformanceData_add(t *testing.T) {
 	perfData := make(performanceData)
 
-	//valid perfdata point
+	// valid perfdata point
 	err := perfData.add(NewPerformanceDataPoint("metric", 10))
 	if err != nil {
 		t.Error("adding a valid performance data point resulted in an error")
@@ -272,7 +270,7 @@ func TestPerformanceData_add(t *testing.T) {
 func TestResponse_SetPerformanceDataJsonLabel(t *testing.T) {
 	perfData := make(performanceData)
 
-	//valid perfdata point
+	// valid perfdata point
 	err := perfData.add(NewPerformanceDataPoint("metric", 10))
 	if err != nil {
 		t.Error("adding a valid performance data point resulted in an error")
