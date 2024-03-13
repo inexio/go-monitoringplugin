@@ -2,6 +2,7 @@ package monitoringplugin
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"os/exec"
 	"regexp"
@@ -25,7 +26,8 @@ func TestOKResponse(t *testing.T) {
 	cmd.Stdout = &outputB
 	err := cmd.Run()
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
 			t.Error("OkResponse is expected to return exit status 0, but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
 		} else {
 			t.Error("cmd.Run() Command resulted in an error that can not be converted to exec.ExitEror! error: " + err.Error())
@@ -156,7 +158,8 @@ func TestOutputMessages(t *testing.T) {
 	err = cmd.Run()
 
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
 			if exitError.ExitCode() != 1 {
 				t.Error("the command is expected to return exit status 1, but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
 			}
@@ -343,7 +346,8 @@ func failureResponse(t *testing.T, exitCode int) {
 	err := cmd.Run()
 
 	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
+		var exitError *exec.ExitError
+		if errors.As(err, &exitError) {
 			if exitError.ExitCode() != exitCode {
 				t.Error(status + " Response is expected to return exit status " + strconv.Itoa(exitCode) + ", but exited with exit code " + strconv.Itoa(exitError.ExitCode()))
 			}
