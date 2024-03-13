@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOKResponse(t *testing.T) {
@@ -393,7 +394,7 @@ func TestResponse_InvalidCharacterReplace(t *testing.T) {
 	r := NewResponse("checked")
 	r.UpdateStatus(OK, "test|2")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplace, "-")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "OK: checked\ntest-2")
@@ -410,7 +411,7 @@ func TestResponse_InvalidCharacterRemoveMessage(t *testing.T) {
 	r := NewResponse("checked")
 	r.UpdateStatus(OK, "test|")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterRemoveMessage, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "OK: checked")
@@ -420,7 +421,7 @@ func TestResponse_InvalidCharacterReplaceWithError(t *testing.T) {
 	r := NewResponse("checked")
 	r.UpdateStatus(WARNING, "test|")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithError, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
@@ -431,7 +432,7 @@ func TestResponse_InvalidCharacterReplaceWithErrorMultipleMessages(t *testing.T)
 	r.UpdateStatus(WARNING, "test|")
 	r.UpdateStatus(WARNING, "test|2")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithError, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "WARNING: output message contains invalid character")
@@ -441,7 +442,7 @@ func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknown(t *testing.T) {
 	r := NewResponse("checked")
 	r.UpdateStatus(WARNING, "test|")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithErrorAndSetUNKNOWN, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")
@@ -452,7 +453,7 @@ func TestResponse_InvalidCharacterReplaceWithErrorAndSetUnknownMultipleMessages(
 	r.UpdateStatus(WARNING, "test|")
 	r.UpdateStatus(WARNING, "test|2")
 	err := r.SetInvalidCharacterBehavior(InvalidCharacterReplaceWithErrorAndSetUNKNOWN, "")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	r.validate()
 	res := r.GetInfo()
 	assert.True(t, res.RawOutput == "UNKNOWN: output message contains invalid character")

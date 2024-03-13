@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateThresholds(t *testing.T) {
@@ -35,19 +36,19 @@ func TestValidateThresholds(t *testing.T) {
 		WarningMin: 2,
 		WarningMax: 1,
 	}
-	assert.Error(t, th5.Validate())
+	require.Error(t, th5.Validate())
 
 	th6 := Thresholds{
 		CriticalMin: 2,
 		CriticalMax: 1,
 	}
-	assert.Error(t, th6.Validate())
+	require.Error(t, th6.Validate())
 
 	th7 := Thresholds{
 		WarningMin:  1,
 		CriticalMin: 2,
 	}
-	assert.Error(t, th7.Validate())
+	require.Error(t, th7.Validate())
 
 	th8 := Thresholds{
 		WarningMax:  2,
@@ -65,39 +66,39 @@ func TestCheckThresholds(t *testing.T) {
 	}
 
 	res, err := th1.CheckValue(6)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, OK, res)
 
 	res, err = th1.CheckValue(5)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, OK, res)
 
 	res, err = th1.CheckValue(10)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, OK, res)
 
 	res, err = th1.CheckValue(4)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
 	res, err = th1.CheckValue(11)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
 	res, err = th1.CheckValue(3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
 	res, err = th1.CheckValue(12)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, WARNING, res)
 
 	res, err = th1.CheckValue(2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, CRITICAL, res)
 
 	res, err = th1.CheckValue(13)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, CRITICAL, res)
 
 	th2 := Thresholds{
@@ -108,6 +109,6 @@ func TestCheckThresholds(t *testing.T) {
 	}
 
 	res, err = th2.CheckValue(4)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, CRITICAL, res)
 }
