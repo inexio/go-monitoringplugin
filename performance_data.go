@@ -219,9 +219,9 @@ func (p *PerformanceDataPoint) output(jsonLabel bool) []byte {
 	}
 	buffer.WriteByte('=')
 
-	switch p.Value.(type) {
+	switch v := p.Value.(type) {
 	case float64:
-		buffer.WriteString(strconv.FormatFloat(p.Value.(float64), 'f', -1, 64))
+		buffer.WriteString(strconv.FormatFloat(v, 'f', -1, 64))
 	default:
 		buffer.WriteString(fmt.Sprint(p.Value))
 	}
