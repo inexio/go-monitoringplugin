@@ -41,11 +41,21 @@ const (
 	InvalidCharacterReplaceWithErrorAndSetUNKNOWN
 )
 
-// OutputMessage represents a message of the response. It contains a message and
-// a status code.
-type OutputMessage struct {
-	Status  int    `yaml:"status" json:"status" xml:"status"`
-	Message string `yaml:"message" json:"message" xml:"message"`
+// NewResponse creates a new Response and sets the default OK message to the
+// given string. The default OK message will be displayed together with the
+// other output messages, but only if the status is still OK when the check
+// exits.
+func NewResponse(defaultOkMessage string) *Response {
+	resp := &Response{
+		statusCode:                 OK,
+		defaultOkMessage:           defaultOkMessage,
+		performanceData:            newPerformanceData(),
+		printPerformanceData:       true,
+		sortOutputMessagesByStatus: true,
+		invalidCharacterBehaviour:  InvalidCharacterRemove,
+	}
+	resp.OutputDelimiterMultiline()
+	return resp
 }
 
 // Response is the main type that is responsible for the check plugin Response.
@@ -64,21 +74,11 @@ type Response struct {
 	invalidCharacterReplaceChar string
 }
 
-// NewResponse creates a new Response and sets the default OK message to the
-// given string. The default OK message will be displayed together with the
-// other output messages, but only if the status is still OK when the check
-// exits.
-func NewResponse(defaultOkMessage string) *Response {
-	resp := &Response{
-		statusCode:                 OK,
-		defaultOkMessage:           defaultOkMessage,
-		performanceData:            newPerformanceData(),
-		printPerformanceData:       true,
-		sortOutputMessagesByStatus: true,
-		invalidCharacterBehaviour:  InvalidCharacterRemove,
-	}
-	resp.OutputDelimiterMultiline()
-	return resp
+// OutputMessage represents a message of the response. It contains a message and
+// a status code.
+type OutputMessage struct {
+	Status  int    `yaml:"status" json:"status" xml:"status"`
+	Message string `yaml:"message" json:"message" xml:"message"`
 }
 
 // AddPerformanceDataPoint adds a PerformanceDataPoint to the performanceData
