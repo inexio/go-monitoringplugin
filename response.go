@@ -4,10 +4,11 @@ package monitoringplugin
 
 import (
 	"bytes"
+	"cmp"
 	"errors"
 	"fmt"
 	"os"
-	"sort"
+	"slices"
 	"strings"
 )
 
@@ -375,11 +376,13 @@ out:
 }
 
 func (r *Response) sortMessagesByStatus() {
-	sort.Slice(r.outputMessages, func(i, j int) bool {
-		if r.outputMessages[i].Status == CRITICAL {
-			return true
+	slices.SortStableFunc(r.outputMessages, func(a, b OutputMessage) int {
+		if a.Status == CRITICAL && b.Status != CRITICAL {
+			return -1
+		} else if a.Status != CRITICAL && b.Status == CRITICAL {
+			return 1
 		}
-		return r.outputMessages[i].Status > r.outputMessages[j].Status
+		return cmp.Compare(b.Status, a.Status)
 	})
 }
 

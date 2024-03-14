@@ -335,13 +335,18 @@ func TestResponse_SortOutputMessagesByStatus(t *testing.T) {
 	r.UpdateStatus(CRITICAL, "message6")
 	r.UpdateStatus(UNKNOWN, "message7")
 	r.UpdateStatus(OK, "message8")
+
 	r.validate()
-	for x, message := range r.outputMessages {
-		for _, m := range r.outputMessages[x:] {
-			assert.True(t, message.Status >= m.Status || message.Status == CRITICAL,
-				"sorting did not work")
-		}
-	}
+	assert.Equal(t, []OutputMessage{
+		{CRITICAL, "message4"},
+		{CRITICAL, "message6"},
+		{UNKNOWN, "message3"},
+		{UNKNOWN, "message7"},
+		{WARNING, "message2"},
+		{WARNING, "message5"},
+		{OK, "message1"},
+		{OK, "message8"},
+	}, r.outputMessages, "sorting did not work")
 }
 
 func TestResponse_InvalidCharacter(t *testing.T) {
