@@ -285,7 +285,7 @@ func (r *Response) output() []byte {
 
 	if r.printPerformanceData {
 		firstPoint := true
-		for _, perfDataPoint := range r.performanceData {
+		for _, perfDataPoint := range r.performanceData.getInfo() {
 			if firstPoint {
 				buffer.WriteString(" | ")
 				firstPoint = false

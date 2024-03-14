@@ -175,13 +175,17 @@ func TestPerformanceDataPoint_output(t *testing.T) {
 func TestPerformanceData_add(t *testing.T) {
 	perfData := newPerformanceData()
 
+	key := newPerformanceDataPointKey("metric", "")
+	assert.Nil(t, perfData.point(key))
+
 	// valid perfdata point
 	require.NoError(t, perfData.add(NewPerformanceDataPoint("metric", 10)),
 		"adding a valid performance data point resulted in an error")
 
-	key := newPerformanceDataPointKey("metric", "")
-	require.Contains(t, perfData, key,
+	point := perfData.point(key)
+	require.NotNil(t, point,
 		"performance data point was not added to the map of performance data points")
+	assert.Equal(t, key, point.key())
 
 	require.Error(t, perfData.add(NewPerformanceDataPoint("metric", 10)),
 		"there was no error when adding a performance data point with a metric, that already exists in performance data")
@@ -207,9 +211,34 @@ func TestResponse_SetPerformanceDataJsonLabel(t *testing.T) {
 		"adding a valid performance data point resulted in an error")
 
 	key := newPerformanceDataPointKey("metric", "")
-	require.Contains(t, perfData, key,
+	point := perfData.point(key)
+	require.Equal(t, key, point.key(),
 		"performance data point was not added to the map of performance data points")
 
 	require.Error(t, perfData.add(NewPerformanceDataPoint("metric", 10)),
 		"there was no error when adding a performance data point with a metric, that already exists in performance data")
+}
+
+func TestPerformanceData_keepOrder(t *testing.T) {
+	pointKeys := [...]performanceDataPointKey{
+		{"metric", ""},
+		{"metric", "tag1"},
+		{"metric", "tag2"},
+	}
+
+	perfData := newPerformanceData()
+	wantKeys := make([]performanceDataPointKey, 0, len(pointKeys))
+	for i := range pointKeys {
+		key := &pointKeys[i]
+		require.NoError(t, perfData.add(
+			NewPerformanceDataPoint(key.Metric, 10).SetLabel(key.Label)))
+		wantKeys = append(wantKeys, newPerformanceDataPointKey(
+			key.Metric, key.Label))
+	}
+
+	gotKeys := make([]performanceDataPointKey, 0, len(pointKeys))
+	for _, p := range perfData.getInfo() {
+		gotKeys = append(gotKeys, p.key())
+	}
+	assert.Equal(t, wantKeys, gotKeys, "wrong order of data points")
 }

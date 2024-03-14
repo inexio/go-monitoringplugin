@@ -26,12 +26,17 @@ func (self *performanceDataPointKey) String() string {
 }
 
 func newPerformanceData() performanceData {
-	return make(performanceData)
+	return performanceData{
+		keys: make(map[performanceDataPointKey]int),
+	}
 }
 
 // performanceData is a map where all performanceDataPoints are stored.
 // It assigns labels (string) to performanceDataPoints.
-type performanceData map[performanceDataPointKey]anyDataPoint
+type performanceData struct {
+	keys   map[performanceDataPointKey]int
+	points []anyDataPoint
+}
 
 type anyDataPoint interface {
 	Validate() error
@@ -53,26 +58,30 @@ type anyDataPoint interface {
 //	if err != nil {
 //	  ...
 //	}
-func (p performanceData) add(point anyDataPoint) error {
+func (p *performanceData) add(point anyDataPoint) error {
 	if err := point.Validate(); err != nil {
 		return fmt.Errorf("given performance data point is not valid: %w", err)
 	}
 	key := point.key()
-	if _, ok := p[key]; ok {
+	if _, ok := p.keys[key]; ok {
 		return fmt.Errorf(
 			"a performance data point with the metric '%s' does already exist", key)
 	}
-	p[key] = point
+	p.keys[key] = len(p.points)
+	p.points = append(p.points, point)
+	return nil
+}
+
+func (p *performanceData) point(key performanceDataPointKey) anyDataPoint {
+	if i, ok := p.keys[key]; ok {
+		return p.points[i]
+	}
 	return nil
 }
 
 // getInfo returns all information for performance data.
-func (p performanceData) getInfo() []anyDataPoint {
-	info := make([]anyDataPoint, 0, len(p))
-	for _, pd := range p {
-		info = append(info, pd)
-	}
-	return info
+func (p *performanceData) getInfo() []anyDataPoint {
+	return p.points
 }
 
 // NewPerformanceDataPoint creates a new PerformanceDataPoint. Metric and value
