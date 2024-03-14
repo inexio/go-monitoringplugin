@@ -12,11 +12,12 @@ import (
 )
 
 func TestOKResponse(t *testing.T) {
-	defaultMessage := "OKTest"
+	const defaultMessage = "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
 		r := NewResponse(defaultMessage)
 		r.OutputAndExit()
 	}
+
 	cmd := exec.Command(os.Args[0], "-test.run=TestOKResponse")
 	cmd.Env = append(os.Environ(), "EXECUTE_PLUGIN=1")
 	var outputB bytes.Buffer
@@ -32,7 +33,7 @@ func TestOKResponse(t *testing.T) {
 	}
 
 	output := outputB.String()
-	require.Regexp(t, "^OK: "+defaultMessage+"\n$", output,
+	assert.Equal(t, "OK: "+defaultMessage+"\n", output,
 		"ok result output message did not match to the expected regex")
 }
 
@@ -97,7 +98,7 @@ func TestStatusHierarchy(t *testing.T) {
 }
 
 func TestOutputMessages(t *testing.T) {
-	defaultMessage := "default"
+	const defaultMessage = "default"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
 		r := NewResponse(defaultMessage)
 		r.UpdateStatus(0, "message1")
@@ -106,6 +107,7 @@ func TestOutputMessages(t *testing.T) {
 		r.UpdateStatus(0, "message4")
 		r.OutputAndExit()
 	}
+
 	if os.Getenv("EXECUTE_PLUGIN") == "2" {
 		r := NewResponse(defaultMessage)
 		r.UpdateStatus(1, "message1")
@@ -115,6 +117,7 @@ func TestOutputMessages(t *testing.T) {
 		r.SetOutputDelimiter(" / ")
 		r.OutputAndExit()
 	}
+
 	cmd := exec.Command(os.Args[0], "-test.run=TestOutputMessages")
 	cmd.Env = append(os.Environ(), "EXECUTE_PLUGIN=1")
 	var outputB bytes.Buffer
@@ -123,8 +126,8 @@ func TestOutputMessages(t *testing.T) {
 		"an error occurred during cmd.Run(), but the Response was expected to exit with exit code 0")
 
 	output := outputB.String()
-	require.Regexp(t,
-		"^OK: "+defaultMessage+"\nmessage1\nmessage2\nmessage3\nmessage4\n$",
+	require.Equal(t,
+		"OK: "+defaultMessage+"\nmessage1\nmessage2\nmessage3\nmessage4\n",
 		output, "output did not match to the expected regex")
 
 	cmd = exec.Command(os.Args[0], "-test.run=TestOutputMessages")
@@ -144,7 +147,7 @@ func TestOutputMessages(t *testing.T) {
 		exitError.ExitCode())
 
 	output = outputB2.String()
-	require.Regexp(t, "^WARNING: message1 / message2 / message3 / message4\n$",
+	require.Equal(t, "WARNING: message1 / message2 / message3 / message4\n",
 		output, "output did not match to the expected regex")
 }
 
@@ -198,7 +201,7 @@ func TestOutputPerformanceData(t *testing.T) {
 		SetMax(100)
 	p3.NewThresholds(0, 80, 0, 90)
 
-	defaultMessage := "OKTest"
+	const defaultMessage = "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
 		r := NewResponse(defaultMessage)
 		if err := r.AddPerformanceDataPoint(p1); err != nil {
@@ -244,7 +247,7 @@ func TestOutputPerformanceDataThresholdsExceeded(t *testing.T) {
 		SetMax(100)
 	p3.NewThresholds(0, 80, 0, 90)
 
-	defaultMessage := "OKTest"
+	const defaultMessage = "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
 		r := NewResponse(defaultMessage)
 		if err := r.AddPerformanceDataPoint(p1); err != nil {
@@ -318,7 +321,7 @@ func failureResponse(t *testing.T, exitCode int) {
 		status, exitCode, exitError.ExitCode())
 
 	output := outputB.String()
-	require.Regexp(t, "^"+status+": "+message+"\n$", output,
+	require.Equal(t, status+": "+message+"\n", output,
 		"%s result output message did not match to the expected regex", status)
 }
 
@@ -422,4 +425,10 @@ func TestResponse_InvalidCharacterDefaultMessage(t *testing.T) {
 	r := NewResponse("test|")
 	r.validate()
 	assert.Equal(t, "OK: test", r.GetInfo().RawOutput)
+}
+
+func TestResponse_WithDefaultOkMessage(t *testing.T) {
+	const msg2 = "message2"
+	r := NewResponse("default message1").WithDefaultOkMessage(msg2)
+	assert.Equal(t, msg2, r.defaultOkMessage)
 }

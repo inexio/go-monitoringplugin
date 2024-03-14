@@ -81,6 +81,12 @@ type OutputMessage struct {
 	Message string `yaml:"message" json:"message" xml:"message"`
 }
 
+// WithDefaultOkMessage changes the default OK message, see [NewResponse].
+func (r *Response) WithDefaultOkMessage(defaultOkMessage string) *Response {
+	r.defaultOkMessage = defaultOkMessage
+	return r
+}
+
 // AddPerformanceDataPoint adds a PerformanceDataPoint to the performanceData
 // map, using performanceData.add(*PerformanceDataPoint).
 //
