@@ -38,9 +38,13 @@ func TestPerformanceDataPointCreation(t *testing.T) {
 	require.Equal(t, max, p.Max, "SetMax failed")
 	require.True(t, p.hasMax, "SetMax failed")
 
-	thresholds := NewThresholds[float64](0, 10, 0, 20)
-	p.SetThresholds(thresholds)
-	require.Equal(t, thresholds, p.Thresholds, "SetThresholds failed")
+	assert.False(t, p.HasThresholds())
+	th := p.NewThresholds(0, 10, 0, 20)
+	assert.Same(t, &p.Thresholds, th, "NewThresholds failed")
+	assert.True(t, p.HasThresholds())
+
+	p.SetThresholds(*th)
+	require.Equal(t, *th, p.Thresholds, "SetThresholds failed")
 }
 
 func TestPerformanceDataPoint_validate(t *testing.T) {
@@ -119,30 +123,26 @@ func TestPerformanceDataPoint_output(t *testing.T) {
 	require.Contains(t, string(p.output(false)), regex,
 		"output string did not match regex")
 
-	th := NewThresholds(0, warn, 0, crit)
-	th.UseWarning(false, true).UseCritical(false, true)
-	p.SetThresholds(th)
+	p.NewThresholds(0, warn, 0, crit).
+		UseWarning(false, true).UseCritical(false, true)
 	regex = fmt.Sprintf("'%s'=%g%s;~:%g;~:%g;;%g", label, value, unit, warn, crit,
 		max)
 	require.Contains(t, string(p.output(false)), regex,
 		"output string did not match regex")
 
-	th = NewThresholds[float64](0, 0, -10, 0)
-	th.UseWarning(true, false).UseCritical(true, false)
-	p.SetThresholds(th)
+	p.NewThresholds(0, 0, -10, 0).
+		UseWarning(true, false).UseCritical(true, false)
 	regex = fmt.Sprintf("'%s'=%g%s;%d:;%d:;;%g", label, value, unit, 0, -10, max)
 	require.Contains(t, string(p.output(false)), regex,
 		"output string did not match regex")
 
-	th = NewThresholds[float64](5, 10, 3, 11)
-	p.SetThresholds(th)
+	p.NewThresholds(5, 10, 3, 11)
 	regex = fmt.Sprintf("'%s'=%g%s;%d:%d;%d:%d;;%g", label, value, unit, 5, 10, 3,
 		11, max)
 	require.Contains(t, string(p.output(false)), regex,
 		"output string did not match regex")
 
-	th = NewThresholds(0, warn, 0, crit)
-	p.SetThresholds(th)
+	p.NewThresholds(0, warn, 0, crit)
 	regex = fmt.Sprintf("'%s'=%g%s;%g;%g;;%g", label, value, unit, warn, crit,
 		max)
 	require.Contains(t, string(p.output(false)), regex,

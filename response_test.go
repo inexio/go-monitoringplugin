@@ -183,20 +183,20 @@ func TestOutputPerformanceData(t *testing.T) {
 	p1 := NewPerformanceDataPoint("label1", 10).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p1.NewThresholds(0, 80, 0, 90)
 
 	p2 := NewPerformanceDataPoint("label2", 20).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p2.NewThresholds(0, 80, 0, 90)
 
 	p3 := NewPerformanceDataPoint("label3", 30).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p3.NewThresholds(0, 80, 0, 90)
 
 	defaultMessage := "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {
@@ -229,20 +229,20 @@ func TestOutputPerformanceDataThresholdsExceeded(t *testing.T) {
 	p1 := NewPerformanceDataPoint("label1", 10).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p1.NewThresholds(0, 80, 0, 90)
 
 	p2 := NewPerformanceDataPoint("label2", 20).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p2.NewThresholds(0, 80, 0, 90)
 
 	p3 := NewPerformanceDataPoint("label3", 85).
 		SetUnit("%").
 		SetMin(0).
-		SetMax(100).
-		SetThresholds(NewThresholds(0, 80, 0, 90))
+		SetMax(100)
+	p3.NewThresholds(0, 80, 0, 90)
 
 	defaultMessage := "OKTest"
 	if os.Getenv("EXECUTE_PLUGIN") == "1" {

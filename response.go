@@ -415,8 +415,7 @@ func (r *Response) GetInfo() ResponseInfo {
 // CheckThresholds checks if the value exceeds the given thresholds and updates
 // the response.
 func (r *Response) CheckThresholds(point anyDataPoint) {
-	res := point.CheckThresholds()
-	if res != OK {
+	if res := point.CheckThresholds(); res != OK {
 		r.UpdateStatus(res, point.Name()+" is outside of "+StatusCode2Text(res)+
 			" threshold")
 	}

@@ -151,7 +151,7 @@ func (p *PerformanceDataPoint[T]) Validate() error {
 		return errors.New("min cannot be larger than max")
 	}
 
-	if !p.Thresholds.IsEmpty() {
+	if p.HasThresholds() {
 		if err := p.Thresholds.Validate(); err != nil {
 			return fmt.Errorf("thresholds are invalid: %w", err)
 		}
@@ -220,7 +220,7 @@ func (p *PerformanceDataPoint[T]) output(jsonLabel bool) []byte {
 	buffer.WriteString(fmt.Sprint(p.Value))
 	buffer.WriteString(p.Unit)
 
-	if !p.Thresholds.IsEmpty() || p.hasMax || p.hasMin {
+	if p.HasThresholds() || p.hasMax || p.hasMin {
 		buffer.WriteByte(';')
 		if p.Thresholds.HasWarning() {
 			buffer.WriteString(p.Thresholds.getWarning())
@@ -241,10 +241,12 @@ func (p *PerformanceDataPoint[T]) output(jsonLabel bool) []byte {
 	return buffer.Bytes()
 }
 
+// HasThresholds checks if the thresholds are not empty.
 func (p *PerformanceDataPoint[T]) HasThresholds() bool {
 	return !p.Thresholds.IsEmpty()
 }
 
+// Name returns a human-readable name suitable for [Response.UpdateStatus].
 func (p *PerformanceDataPoint[T]) Name() string {
 	if p.Label == "" {
 		return p.Metric
@@ -252,6 +254,18 @@ func (p *PerformanceDataPoint[T]) Name() string {
 	return p.Metric + " (" + p.Label + ")"
 }
 
+// CheckThresholds checks if [Value] is violating the thresholds. See
+// [Thresholds.CheckValue].
 func (p *PerformanceDataPoint[T]) CheckThresholds() int {
 	return p.Thresholds.CheckValue(p.Value)
+}
+
+// NewThresholds is a wrapper, which creates [NewThresholds] with same type as
+// [Value], [SetThresholds] it and returns pointer to [Thresholds].
+func (p *PerformanceDataPoint[T]) NewThresholds(warningMin, warningMax,
+	criticalMin, criticalMax T,
+) *Thresholds[T] {
+	th := NewThresholds(warningMin, warningMax, criticalMin, criticalMax)
+	p.SetThresholds(th)
+	return &p.Thresholds
 }

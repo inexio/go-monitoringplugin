@@ -26,19 +26,17 @@ func Example_basicUsage() {
 	response.UpdateStatus(monitoringplugin.WARNING, "something else is warning!")
 
 	// adding performance data
-	err := response.AddPerformanceDataPoint(
-		monitoringplugin.NewPerformanceDataPoint("response_time", 10).
-			SetUnit("s").SetMin(0).
-			SetThresholds(monitoringplugin.NewThresholds(0, 10, 0, 20)))
-	if err != nil {
+	p1 := monitoringplugin.NewPerformanceDataPoint("response_time", 10).
+		SetUnit("s").SetMin(0)
+	p1.NewThresholds(0, 10, 0, 20)
+	if err := response.AddPerformanceDataPoint(p1); err != nil {
 		// error handling
 	}
 
-	err = response.AddPerformanceDataPoint(
-		monitoringplugin.NewPerformanceDataPoint("memory_usage", 50.6).
-			SetUnit("%").SetMin(0).SetMax(100).
-			SetThresholds(monitoringplugin.NewThresholds(0, 80.0, 0, 90.0)))
-	if err != nil {
+	p2 := monitoringplugin.NewPerformanceDataPoint("memory_usage", 50.6).
+		SetUnit("%").SetMin(0).SetMax(100)
+	p2.NewThresholds(0, 80, 0, 90)
+	if err := response.AddPerformanceDataPoint(p2); err != nil {
 		// error handling
 	}
 
